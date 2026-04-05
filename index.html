@@ -473,5 +473,378 @@
 
 </div>
 
+<script>
+const SCENARIOS = {
+  1: {
+    badge: 'Phase 1: Discovery',
+    status: 'Collecting travel requirements…',
+    messages: [
+      { type: 'agent', text: 'Namaste! 🙏 Main aapka AI Travel Concierge hoon. Mujhe kuch zaroori sawaalon ke jawaab chahiye taaki main aapke liye ek perfect trip plan kar sakoon.\n\n*Sabse pehla sawal:* Aap kahan jaana chahte hain? 🗺️', time: '10:00 AM', quickReplies: ['Manali', 'Goa', 'Rajasthan', 'Andaman'] },
+      { type: 'user', text: 'Manali jaana hai, puri family ke saath', time: '10:01 AM' },
+      { type: 'agent', text: 'Manali — excellent choice! ❄️\n\nAb bataiye:\n• *Kitne logon* ka group hai?\n• Kis *mahine* mein jaana chahte hain?', time: '10:01 AM' },
+      { type: 'user', text: '5 log, July mein, 7 din', time: '10:02 AM' },
+      { type: 'agent', text: 'Perfect! Ek last cheez — aapka *total budget* kya hai? (Approximate bhi theek hai)\n\n💡 Tip: Budget pata hone se main aapko best value options suggest kar sakta hoon.', time: '10:02 AM', quickReplies: ['₹30K–50K', '₹50K–80K', '₹80K–1.2L', '₹1.2L+'] },
+      { type: 'user', text: 'Around 70,000 rupees total', time: '10:03 AM' },
+      { type: 'agent', text: '✅ *Requirements captured!*\n\n📍 Destination: Manali\n👨‍👩‍👧‍👦 Group: 5 people\n📅 Duration: 7 days, July\n💰 Budget: ₹70,000\n\nAb main aapke liye ek customized itinerary draft kar raha hoon… ✨', time: '10:03 AM' },
+    ],
+    panel: 'discovery'
+  },
+  2: {
+    badge: 'Phase 2: NLU Engine',
+    status: 'Analyzing intent & curating itinerary…',
+    messages: [
+      { type: 'system', text: '— NLU Engine Activated —' },
+      { type: 'user', text: 'Mujhe pahadon mein sukoon chahiye, nature ke beech. Bheed-bhad se door.', time: '10:05 AM' },
+      { type: 'agent', text: '🌿 *Samajh gaya!* Aap ek *peaceful mountain retreat* dhundh rahe hain — not the typical tourist circuit.\n\nMain aapke liye ek *off-beat Manali* itinerary suggest karta hoon…', time: '10:05 AM' },
+      { type: 'agent', text: '🗓️ *7-Day Curated Itinerary — Manali*\n\n*Day 1:* Arrival + Solang Valley (sunset)\n*Day 2:* Naggar Castle + hidden cafe trails\n*Day 3:* Beas Kund Trek (peaceful, less crowded)\n*Day 4:* Free Day 🌄 (rest or local explore)\n*Day 5:* Kasol day trip + river meditation\n*Day 6:* Hadimba Devi + Old Manali bazaar\n*Day 7:* Check-out with memories\n\n📝 Note: Har plan mein 1 free day compulsory hai — aapki marzi!', time: '10:06 AM' },
+      { type: 'user', text: 'Ye toh bahut achha lag raha hai!', time: '10:07 AM' },
+      { type: 'agent', text: 'Main itinerary mein *Day 3 pe trekking* include ki hai. Kya aap isko *confirm* karte hain ya koi badlav chahiye? 😊\n\nAap keh sakte hain:\n• "Day 3 badlo"\n• "Budget breakdown chahiye"\n• "Confirm kar do"', time: '10:07 AM', quickReplies: ['Itinerary confirm karein', 'Day 3 badlo', 'Hotel suggest karein'] },
+    ],
+    panel: 'nlu'
+  },
+  3: {
+    badge: 'Phase 3: Smart Filtering',
+    status: 'Monitoring for abuse / spam…',
+    messages: [
+      { type: 'system', text: '— Gatekeeping Module Active —' },
+      { type: 'user', text: 'Arre yaar kuch bhi likh do, main toh bas timepass kar raha hoon 😂', time: '11:00 AM' },
+      { type: 'agent', text: '⚡ *Intent Check:* Lagta hai aap abhi serious planning mein nahi hain!\n\nJab bhi aap Manali trip plan karna chahein, main yahaan hoon. Ek hi message mein shuru kar sakte hain! 😊\n\n*Kya main aapki kuch genuine help kar sakta hoon?*', time: '11:00 AM', warn: true },
+      { type: 'user', text: 'Tu kya hai? Asli hai ya bot hai? Mere saath fraud mat karo', time: '11:01 AM' },
+      { type: 'agent', text: '🤖 Main ek AI Travel Assistant hoon — bilkul transparent!\n\nMain:  ✅ Travel itinerary banata hoon  ✅ Requirements collect karta hoon  ✅ Aapko human agent se connect karta hoon\n\nKoi bhi payment ya personal info yahaan mat dena. Sab kuch official channel pe hoga. 🔒', time: '11:01 AM' },
+      { type: 'user', text: 'teri maa ki aankh madarchod', time: '11:02 AM' },
+      { type: 'agent', text: '🚫 *Conversation paused.*\n\nAbusive language detect ki gayi hai. Yeh conversation humari policy violate karta hai.\n\nAgar aap genuine traveler hain aur help chahiye, please ek fresh message bhejein. Warna yeh session close ho jayega.', time: '11:02 AM', danger: true },
+    ],
+    panel: 'filter'
+  },
+  4: {
+    badge: 'Phase 4: Feedback Loop',
+    status: 'Iterating on itinerary…',
+    messages: [
+      { type: 'system', text: '— Feedback & Iteration Loop —' },
+      { type: 'agent', text: '✅ Itinerary ready hai! Ab aap badlav maang sakte hain jab chahein:\n\n*Current Plan:*\nDay 3 — Beas Kund Trek\nDay 5 — Kasol Day Trip\nDay 4 — Free Day', time: '10:15 AM' },
+      { type: 'user', text: 'Day 3 pe trekking mat rakho, meri daadi ke liye thak jaayengi', time: '10:16 AM' },
+      { type: 'agent', text: '💡 *Samjha!* Daadi ji ke comfort ko priority denge.\n\n*Day 3 Update:*\n~~Beas Kund Trek~~ ❌\n✅ *Hadimba Temple* + nearby garden walk + local café lunch\n\nYeh low-effort hai aur equally beautiful! Kya yeh theek rahega? 🌸', time: '10:16 AM', quickReplies: ['Haan, perfect!', 'Aur badlav chahiye', 'Budget batao'] },
+      { type: 'user', text: 'Haan perfect! Aur Day 5 mein koi aur option hai?', time: '10:17 AM' },
+      { type: 'agent', text: '📍 *Day 5 Alternatives:*\n\n1. 🌊 Kasol + Kheerganga (scenic, easy)\n2. 🏔️ Rohtang Pass viewpoint (scenic drive)\n3. 🛶 Kullu River Rafting (adventurous)\n4. 🍎 Apple orchard village walk (peaceful)\n\nKaunsa aapko pasand hai?', time: '10:17 AM', quickReplies: ['Rohtang Pass', 'River Rafting', 'Apple Orchard'] },
+      { type: 'user', text: 'Rohtang Pass lagta hai accha', time: '10:18 AM' },
+      { type: 'agent', text: '✅ *Day 5 updated:* Rohtang Pass Scenic Drive!\n\nNote: July mein Rohtang permit zaroori hai — main aapke human agent ko yeh info bhej dunga.\n\n*Sab kuch theek lagta hai? "Confirm" karein toh final summary bhejta hoon! 🎉*', time: '10:18 AM', quickReplies: ['Confirm karo!', 'Aur kuch dekhna hai'] },
+    ],
+    panel: 'feedback'
+  },
+  5: {
+    badge: 'Phase 5: Human Handover',
+    status: 'Transferring to Sales Desk…',
+    messages: [
+      { type: 'system', text: '— Human Handover Initiated —' },
+      { type: 'user', text: 'Confirm karo!', time: '10:25 AM' },
+      { type: 'agent', text: '🎉 *Itinerary Confirmed!*\n\nMain ab yeh complete summary apni Sales Team ko bhej raha hoon. Woh aapko pricing ke saath contact karenge.\n\nEk moment…', time: '10:25 AM' },
+      { type: 'agent', isHandover: true, time: '10:25 AM' },
+      { type: 'agent', text: '✅ *Summary Sales Desk ko bhej di gayi hai!*\n\nAapka agent *Priya* aapko 15-20 minute mein call ya WhatsApp karenge pricing aur booking ke liye.\n\n*Customer ID:* #TM-2024-0847\n\nKoi bhi sawal ho toh batayein! 😊', time: '10:26 AM' },
+      { type: 'system', text: '— Conversation handed over to Human Agent Priya —' },
+    ],
+    panel: 'handover'
+  }
+};
+
+let currentStep = 1;
+let demoMsgIndex = 0;
+let demoMessages = [];
+let demoRunning = false;
+
+function loadStep(n) {
+  currentStep = n;
+  demoMsgIndex = 0;
+  demoRunning = false;
+
+  document.querySelectorAll('.flow-step').forEach((el, i) => {
+    el.classList.remove('active', 'done');
+    if (i + 1 < n) el.classList.add('done');
+    else if (i + 1 === n) el.classList.add('active');
+  });
+
+  const scenario = SCENARIOS[n];
+  document.getElementById('phase-badge').textContent = scenario.badge;
+  document.getElementById('chat-status').textContent = scenario.status;
+
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+
+  demoMessages = scenario.messages;
+  renderAllMessages(demoMessages);
+  renderPanel(scenario.panel);
+}
+
+function renderAllMessages(messages) {
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+  messages.forEach(m => appendMessage(m));
+}
+
+function appendMessage(m) {
+  const container = document.getElementById('chat-messages');
+  const wrap = document.createElement('div');
+  wrap.className = `msg ${m.type} fade-in`;
+
+  if (m.type === 'system') {
+    wrap.innerHTML = `<div class="bubble">${m.text}</div>`;
+  } else if (m.isHandover) {
+    wrap.innerHTML = `
+      <div class="handover-bubble">
+        <h4>📋 Sales Desk Handover Summary</h4>
+        <div class="handover-row"><span class="key">Customer</span><span class="val">Ramesh Sharma</span></div>
+        <div class="handover-row"><span class="key">WhatsApp</span><span class="val">+91 98765 43210</span></div>
+        <div class="handover-row"><span class="key">Destination</span><span class="val">Manali, Himachal Pradesh</span></div>
+        <div class="handover-row"><span class="key">Group</span><span class="val">5 persons (1 elderly)</span></div>
+        <div class="handover-row"><span class="key">Duration</span><span class="val">7 days — July 2024</span></div>
+        <div class="handover-row"><span class="key">Budget</span><span class="val">₹70,000 total</span></div>
+        <div class="handover-row"><span class="key">Special Notes</span><span class="val">No trekking, Rohtang permit needed</span></div>
+        <div class="handover-row"><span class="key">Intent Score</span><span class="val" style="color:#2E7D32">94% — High Purchase Intent</span></div>
+        <div style="margin-top:10px;padding-top:8px;border-top:1px solid #90CAF9;font-size:0.72rem;color:#1565C0">
+          ⚡ Action Required: Send pricing quote within 20 mins for hot lead
+        </div>
+      </div>
+      <div class="msg-time">${m.time}</div>`;
+  } else if (m.warn) {
+    wrap.innerHTML = `
+      <div class="warn-bubble">⚠️ <span>${m.text.replace(/\n/g, '<br>')}</span></div>
+      <div class="msg-time">${m.time}</div>`;
+  } else if (m.danger) {
+    wrap.innerHTML = `
+      <div class="danger-bubble">${m.text.replace(/\n/g, '<br>')}</div>
+      <div class="msg-time">${m.time}</div>`;
+  } else {
+    const formatted = m.text.replace(/\*([^*]+)\*/g, '<strong>$1</strong>').replace(/\n/g, '<br>').replace(/~~([^~]+)~~/g, '<del>$1</del>');
+    let qr = '';
+    if (m.quickReplies) {
+      qr = `<div class="quick-replies">${m.quickReplies.map(q => `<button class="qr-btn" onclick="sendQuick('${q}')">${q}</button>`).join('')}</div>`;
+    }
+    wrap.innerHTML = `<div class="bubble">${formatted}${qr}</div><div class="msg-time">${m.time}</div>`;
+  }
+
+  container.appendChild(wrap);
+  container.scrollTop = container.scrollHeight;
+}
+
+function sendQuick(text) {
+  addUserMsg(text);
+}
+
+function sendUserMsg() {
+  const input = document.getElementById('user-input');
+  const val = input.value.trim();
+  if (!val) return;
+  input.value = '';
+  addUserMsg(val);
+}
+
+function addUserMsg(text) {
+  appendMessage({ type: 'user', text, time: 'Now' });
+  // Show typing indicator then generic reply
+  setTimeout(() => {
+    const container = document.getElementById('chat-messages');
+    const typing = document.createElement('div');
+    typing.className = 'msg agent fade-in';
+    typing.id = 'typing';
+    typing.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    container.appendChild(typing);
+    container.scrollTop = container.scrollHeight;
+
+    setTimeout(() => {
+      const t = document.getElementById('typing');
+      if (t) t.remove();
+      appendMessage({ type: 'agent', text: '✅ Samajh liya! Aage badhte hain — koi aur sawaal ya badlav? 😊', time: 'Now', quickReplies: ['Confirm karo', 'Aur badlav chahiye'] });
+    }, 1800);
+  }, 400);
+}
+
+function runDemo() {
+  if (demoRunning) return;
+  demoRunning = true;
+  const container = document.getElementById('chat-messages');
+  container.innerHTML = '';
+  demoMsgIndex = 0;
+  playNextMsg();
+}
+
+function playNextMsg() {
+  if (demoMsgIndex >= demoMessages.length) { demoRunning = false; return; }
+  const m = demoMessages[demoMsgIndex++];
+  const delay = m.type === 'agent' ? 900 : 500;
+
+  if (m.type === 'agent' && !m.isHandover && !m.warn && !m.danger) {
+    // Show typing first
+    const container = document.getElementById('chat-messages');
+    const typing = document.createElement('div');
+    typing.className = 'msg agent';
+    typing.id = 'typing-demo';
+    typing.innerHTML = `<div class="typing-indicator"><div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div></div>`;
+    container.appendChild(typing);
+    container.scrollTop = container.scrollHeight;
+
+    setTimeout(() => {
+      const t = document.getElementById('typing-demo');
+      if (t) t.remove();
+      appendMessage(m);
+      setTimeout(playNextMsg, 600);
+    }, 1200);
+  } else {
+    setTimeout(() => {
+      appendMessage(m);
+      setTimeout(playNextMsg, 600);
+    }, delay);
+  }
+}
+
+function renderPanel(type) {
+  const body = document.getElementById('panel-body');
+
+  const panels = {
+    discovery: `
+      <div class="info-card">
+        <h4>Session Info</h4>
+        <div class="info-row"><span class="k">Customer</span><span class="v">Ramesh Sharma</span></div>
+        <div class="info-row"><span class="k">Channel</span><span class="v">WhatsApp</span></div>
+        <div class="info-row"><span class="k">Session Start</span><span class="v">10:00 AM</span></div>
+        <div class="info-row"><span class="k">Messages</span><span class="v">6</span></div>
+        <div class="info-row"><span class="k">Phase</span><span class="v amber">Discovery</span></div>
+      </div>
+      <div class="info-card">
+        <h4>Data Collected</h4>
+        <div class="info-row"><span class="k">Destination</span><span class="v green">✓ Manali</span></div>
+        <div class="info-row"><span class="k">Group Size</span><span class="v green">✓ 5 persons</span></div>
+        <div class="info-row"><span class="k">Duration</span><span class="v green">✓ 7 days</span></div>
+        <div class="info-row"><span class="k">Budget</span><span class="v green">✓ ₹70,000</span></div>
+        <div class="info-row"><span class="k">Preferences</span><span class="v amber">Pending</span></div>
+      </div>
+      <div class="info-card">
+        <h4>Completion</h4>
+        <div class="progress-ring">
+          <div class="ring-wrap">
+            <svg width="56" height="56"><circle cx="28" cy="28" r="22" fill="none" stroke="#eee" stroke-width="5"/><circle cx="28" cy="28" r="22" fill="none" stroke="#4A5240" stroke-width="5" stroke-dasharray="138.16" stroke-dashoffset="34.54" stroke-linecap="round"/></svg>
+            <div class="ring-pct">75%</div>
+          </div>
+          <div class="ring-info"><h4>Discovery</h4><p>4 of 5 fields collected</p></div>
+        </div>
+      </div>
+    `,
+    nlu: `
+      <div class="info-card">
+        <h4>Intent Recognition</h4>
+        <div class="intent-bar">
+          <div class="intent-label"><span class="name">Peaceful Retreat</span><span class="score" style="color:#4A5240">91%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:91%;background:#4A5240"></div></div>
+        </div>
+        <div class="intent-bar" style="margin-top:10px">
+          <div class="intent-label"><span class="name">Nature / Offbeat</span><span class="score" style="color:#7D8C6E">78%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:78%;background:#7D8C6E"></div></div>
+        </div>
+        <div class="intent-bar" style="margin-top:10px">
+          <div class="intent-label"><span class="name">Family Friendly</span><span class="score" style="color:#D4A849">65%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:65%;background:#D4A849"></div></div>
+        </div>
+        <div class="intent-bar" style="margin-top:10px">
+          <div class="intent-label"><span class="name">Adventure Sports</span><span class="score" style="color:#ccc">12%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:12%;background:#ccc"></div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <h4>Detected Keywords</h4>
+        <div>
+          <span class="tag blue">sukoon</span><span class="tag blue">pahadon</span>
+          <span class="tag green">nature</span><span class="tag green">off-beat</span>
+          <span class="tag gray">bheed-bhad se door</span>
+        </div>
+      </div>
+      <div class="info-card">
+        <h4>Itinerary Mode</h4>
+        <div class="info-row"><span class="k">Type</span><span class="v">Curated (Vague Input)</span></div>
+        <div class="info-row"><span class="k">Template</span><span class="v">Peaceful Mountain</span></div>
+        <div class="info-row"><span class="k">Free Day</span><span class="v green">✓ Day 4 included</span></div>
+      </div>
+    `,
+    filter: `
+      <div class="info-card">
+        <h4>Threat Analysis</h4>
+        <div class="intent-bar">
+          <div class="intent-label"><span class="name">Spam Probability</span><span class="score" style="color:#C62828">88%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:88%;background:#C62828"></div></div>
+        </div>
+        <div class="intent-bar" style="margin-top:10px">
+          <div class="intent-label"><span class="name">Genuine Interest</span><span class="score" style="color:#ccc">8%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:8%;background:#ccc"></div></div>
+        </div>
+        <div class="intent-bar" style="margin-top:10px">
+          <div class="intent-label"><span class="name">Abuse Level</span><span class="score" style="color:#C62828">Critical</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:95%;background:#C62828"></div></div>
+        </div>
+      </div>
+      <div class="info-card">
+        <h4>Flags Raised</h4>
+        <span class="tag red">Abuse Detected</span>
+        <span class="tag red">Non-Serious Query</span>
+        <span class="tag red">Bot Suspicion</span>
+      </div>
+      <div class="info-card">
+        <h4>Action Taken</h4>
+        <div class="info-row"><span class="k">Msg 1</span><span class="v amber">Soft redirect</span></div>
+        <div class="info-row"><span class="k">Msg 2</span><span class="v amber">Transparency reply</span></div>
+        <div class="info-row"><span class="k">Msg 3</span><span class="v red">Session paused</span></div>
+        <div class="info-row"><span class="k">Human Notified</span><span class="v">No (auto-filtered)</span></div>
+      </div>
+      <div class="alert-box warn">⚠️ Human agent time saved. No escalation required.</div>
+    `,
+    feedback: `
+      <div class="info-card">
+        <h4>Iteration Log</h4>
+        <div class="info-row"><span class="k">Iteration 1</span><span class="v">Day 3: Trek → Temple Walk</span></div>
+        <div class="info-row"><span class="k">Iteration 2</span><span class="v">Day 5: Kasol → Rohtang</span></div>
+        <div class="info-row"><span class="k">Status</span><span class="v green">Awaiting Confirm</span></div>
+      </div>
+      <div class="info-card">
+        <h4>Special Requirements</h4>
+        <span class="tag blue">Elderly traveler</span>
+        <span class="tag green">No trekking</span>
+        <span class="tag green">Low-effort activities</span>
+        <span class="tag gray">Rohtang permit</span>
+      </div>
+      <div class="info-card">
+        <h4>Engagement Score</h4>
+        <div class="progress-ring">
+          <div class="ring-wrap">
+            <svg width="56" height="56"><circle cx="28" cy="28" r="22" fill="none" stroke="#eee" stroke-width="5"/><circle cx="28" cy="28" r="22" fill="none" stroke="#D4A849" stroke-width="5" stroke-dasharray="138.16" stroke-dashoffset="20.72" stroke-linecap="round"/></svg>
+            <div class="ring-pct">85%</div>
+          </div>
+          <div class="ring-info"><h4>High Engagement</h4><p>Strong purchase intent detected</p></div>
+        </div>
+      </div>
+    `,
+    handover: `
+      <div class="info-card">
+        <h4>Handover Status</h4>
+        <div class="info-row"><span class="k">Summary Sent</span><span class="v green">✓ Yes</span></div>
+        <div class="info-row"><span class="k">Assigned To</span><span class="v">Priya (Sales)</span></div>
+        <div class="info-row"><span class="k">Priority</span><span class="v red">🔥 Hot Lead</span></div>
+        <div class="info-row"><span class="k">Response SLA</span><span class="v amber">20 minutes</span></div>
+        <div class="info-row"><span class="k">Customer ID</span><span class="v">#TM-2024-0847</span></div>
+      </div>
+      <div class="info-card">
+        <h4>Purchase Intent</h4>
+        <div class="intent-bar">
+          <div class="intent-label"><span class="name">Conversion Probability</span><span class="score" style="color:#2E7D32">94%</span></div>
+          <div class="bar-track"><div class="bar-fill" style="width:94%;background:#2E7D32"></div></div>
+        </div>
+      </div>
+      <div class="alert-box info">📤 AI ka kaam done. Human agent pricing quote karega aur deal close karega.</div>
+      <button class="action-btn primary" onclick="alert('Opening Sales CRM...')">Open in Sales CRM →</button>
+      <button class="action-btn outline" onclick="alert('PDF generated!')">Export PDF Summary</button>
+    `
+  };
+
+  body.innerHTML = panels[type] || '';
+}
+
+// Initialize
+loadStep(1);
+</script>
 </body>
 </html>
