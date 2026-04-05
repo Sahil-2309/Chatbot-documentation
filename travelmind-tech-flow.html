@@ -1,0 +1,580 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TravelMind AI — Technical Integration Flow</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080C10; --surface: #0D1318; --surface2: #111820;
+  --border: rgba(255,255,255,0.06); --border2: rgba(255,255,255,0.12);
+  --text: #E8EDF2; --muted: #5A6A7A; --dim: #2A3540;
+  --wa: #25D366; --wa2: #128C7E; --node: #F0A500;
+  --ai: #4A9EFF; --ai2: #0060D0; --db: #A855F7; --db2: #6B21A8;
+  --crm: #FF6B35; --crm2: #C44A1A; --infra: #10B981; --infra2: #065F46;
+  --red: #EF4444; --yellow: #EAB308;
+}
+* { margin:0; padding:0; box-sizing:border-box; }
+html { scroll-behavior: smooth; }
+body { background: var(--bg); color: var(--text); font-family: 'JetBrains Mono', monospace; min-height: 100vh; overflow-x: hidden; }
+body::before { content:''; position:fixed; inset:0; background-image: linear-gradient(rgba(74,158,255,0.03) 1px,transparent 1px), linear-gradient(90deg,rgba(74,158,255,0.03) 1px,transparent 1px); background-size:40px 40px; pointer-events:none; z-index:0; }
+
+nav { position:sticky; top:0; z-index:100; background:rgba(8,12,16,0.92); backdrop-filter:blur(16px); border-bottom:1px solid var(--border); padding:0 2rem; display:flex; align-items:center; height:58px; gap:24px; }
+.nav-logo { font-family:'Syne',sans-serif; font-weight:800; font-size:1rem; letter-spacing:0.08em; text-transform:uppercase; display:flex; align-items:center; gap:10px; }
+.nav-logo .dot-logo { width:28px; height:28px; border-radius:7px; background:linear-gradient(135deg,var(--ai),var(--wa)); display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
+.nav-tabs { display:flex; gap:4px; margin-left:auto; }
+.nav-tab { padding:5px 14px; border-radius:6px; font-size:0.7rem; font-weight:500; letter-spacing:0.06em; color:var(--muted); cursor:pointer; transition:all 0.2s; border:1px solid transparent; }
+.nav-tab:hover,.nav-tab.active { color:var(--text); border-color:var(--border2); background:var(--surface); }
+.nav-tab.active { position:relative; }
+.nav-tab.active::after { content:''; position:absolute; bottom:-1px; left:20%; right:20%; height:2px; border-radius:2px; background:linear-gradient(90deg,var(--ai),var(--wa)); }
+.nav-badge { margin-left:8px; padding:3px 10px; border-radius:999px; background:rgba(74,158,255,0.1); border:1px solid rgba(74,158,255,0.25); font-size:0.65rem; color:var(--ai); letter-spacing:0.08em; }
+
+.hero { position:relative; z-index:1; padding:5rem 2rem 3rem; text-align:center; }
+.hero-label { display:inline-flex; align-items:center; gap:8px; padding:5px 14px; border-radius:999px; border:1px solid rgba(74,158,255,0.3); background:rgba(74,158,255,0.06); font-size:0.68rem; letter-spacing:0.12em; color:var(--ai); text-transform:uppercase; margin-bottom:1.5rem; }
+.pulse { width:6px; height:6px; border-radius:50%; background:var(--ai); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{ opacity:1; transform:scale(1); } 50%{ opacity:0.4; transform:scale(0.6); } }
+.hero h1 { font-family:'Syne',sans-serif; font-size:clamp(2rem,5vw,3.5rem); font-weight:800; line-height:1.1; letter-spacing:-0.02em; margin-bottom:1rem; }
+.hero h1 span { color:var(--ai); }
+.hero p { color:var(--muted); font-size:0.85rem; max-width:650px; margin:0 auto 2.5rem; line-height:1.8; }
+
+main { position:relative; z-index:1; padding:0 2rem 4rem; max-width:1300px; margin:0 auto; }
+.sec-label { display:flex; align-items:center; gap:12px; font-size:0.65rem; letter-spacing:0.15em; text-transform:uppercase; color:var(--muted); margin-bottom:1.5rem; margin-top:3rem; }
+.sec-label::after { content:''; flex:1; height:1px; background:var(--border); }
+
+.flow-diagram { background:var(--surface); border:1px solid var(--border); border-radius:16px; padding:2rem; position:relative; overflow:hidden; margin-bottom:2rem; }
+.flow-diagram::before { content:attr(data-label); position:absolute; top:16px; right:20px; font-size:0.62rem; color:var(--dim); letter-spacing:0.1em; }
+.flow-row { display:flex; align-items:center; gap:0; margin-bottom:12px; flex-wrap:wrap; }
+.flow-node { padding:10px 16px; border-radius:10px; font-size:0.75rem; font-weight:500; border:1px solid; white-space:nowrap; display:flex; align-items:center; gap:8px; transition:all 0.2s; cursor:default; }
+.flow-node:hover { transform:scale(1.03); }
+.flow-node.wa { color:var(--wa); border-color:rgba(37,211,102,0.4); background:rgba(37,211,102,0.08); }
+.flow-node.node { color:var(--node); border-color:rgba(240,165,0,0.4); background:rgba(240,165,0,0.08); }
+.flow-node.ai { color:var(--ai); border-color:rgba(74,158,255,0.4); background:rgba(74,158,255,0.08); }
+.flow-node.db { color:var(--db); border-color:rgba(168,85,247,0.4); background:rgba(168,85,247,0.08); }
+.flow-node.crm { color:var(--crm); border-color:rgba(255,107,53,0.4); background:rgba(255,107,53,0.08); }
+.flow-node.infra { color:var(--infra); border-color:rgba(16,185,129,0.4); background:rgba(16,185,129,0.08); }
+.flow-node.red { color:var(--red); border-color:rgba(239,68,68,0.4); background:rgba(239,68,68,0.08); }
+.flow-edge { flex:1; height:2px; position:relative; min-width:20px; background:var(--dim); overflow:visible; }
+.flow-edge::after { content:'▶'; position:absolute; right:-2px; top:50%; transform:translateY(-50%); color:var(--dim); font-size:0.6rem; }
+.flow-edge .dot { position:absolute; top:50%; transform:translateY(-50%); width:6px; height:6px; border-radius:50%; animation:moveDot 2s infinite linear; }
+@keyframes moveDot { 0%{left:0;opacity:0} 10%{opacity:1} 90%{opacity:1} 100%{left:calc(100% - 6px);opacity:0} }
+.flow-label { font-size:0.6rem; color:var(--muted); text-align:center; margin-bottom:2px; letter-spacing:0.05em; }
+
+.info-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px,1fr)); gap:14px; margin-bottom:2rem; }
+.info-card { background:var(--surface); border:1px solid var(--border); border-radius:14px; padding:20px; transition:all 0.25s; position:relative; overflow:hidden; }
+.info-card:hover { border-color:var(--border2); box-shadow:0 4px 24px rgba(0,0,0,0.3); }
+.info-card::before { content:''; position:absolute; top:0; left:0; right:0; height:2px; border-radius:14px 14px 0 0; }
+.info-card.wa::before { background:linear-gradient(90deg,var(--wa),var(--wa2)); }
+.info-card.node::before { background:linear-gradient(90deg,var(--node),#C07800); }
+.info-card.ai::before { background:linear-gradient(90deg,var(--ai),var(--ai2)); }
+.info-card.db::before { background:linear-gradient(90deg,var(--db),var(--db2)); }
+.info-card.crm::before { background:linear-gradient(90deg,var(--crm),var(--crm2)); }
+.info-card.infra::before { background:linear-gradient(90deg,var(--infra),var(--infra2)); }
+.info-card.red::before { background:linear-gradient(90deg,var(--red),#B91C1C); }
+.info-card.yellow::before { background:linear-gradient(90deg,var(--yellow),#CA8A04); }
+
+.card-icon { font-size:1.3rem; margin-bottom:10px; width:36px; height:36px; border-radius:9px; display:flex; align-items:center; justify-content:center; }
+.card-label { font-family:'Syne',sans-serif; font-size:0.72rem; font-weight:700; letter-spacing:0.08em; text-transform:uppercase; margin-bottom:4px; }
+.card-title { font-size:0.88rem; font-weight:500; margin-bottom:6px; line-height:1.4; }
+.card-desc { font-size:0.72rem; color:var(--muted); line-height:1.7; }
+
+.code-block { background:rgba(255,255,255,0.03); border:1px solid var(--border); border-radius:10px; padding:16px 18px; margin:12px 0; font-size:0.72rem; color:#A8C0D0; line-height:1.8; overflow-x:auto; position:relative; }
+.code-block::before { content:attr(data-lang); position:absolute; top:8px; right:12px; font-size:0.58rem; color:var(--dim); letter-spacing:0.08em; text-transform:uppercase; }
+.kw { color:var(--ai); } .str { color:var(--wa); } .cmt { color:var(--muted); } .fn { color:var(--crm); } .num { color:var(--db); }
+
+.cost-table { background:var(--surface); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:2rem; }
+.cost-table table { width:100%; border-collapse:collapse; }
+.cost-table thead { background:var(--surface2); }
+.cost-table th,.cost-table td { padding:12px 16px; text-align:left; border-bottom:1px solid var(--border); font-size:0.75rem; }
+.cost-table th { color:var(--muted); font-weight:500; letter-spacing:0.06em; text-transform:uppercase; font-size:0.65rem; }
+.cost-table td:last-child { color:var(--infra); font-weight:600; }
+.cost-table tfoot td { background:rgba(16,185,129,0.06); color:var(--infra); font-weight:700; border:none; }
+.cost-table .highlight td { background:rgba(74,158,255,0.05); }
+
+.step-flow { display:flex; flex-direction:column; gap:0; margin-bottom:2rem; }
+.step-item { display:flex; gap:16px; padding:16px 0; }
+.step-line { display:flex; flex-direction:column; align-items:center; width:40px; flex-shrink:0; }
+.step-num { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-family:'Syne',sans-serif; font-weight:800; font-size:0.75rem; flex-shrink:0; }
+.step-connector { flex:1; width:2px; background:var(--border); margin-top:4px; }
+.step-content { flex:1; padding-bottom:16px; border-bottom:1px solid var(--border); }
+.step-item:last-child .step-connector { display:none; }
+.step-item:last-child .step-content { border:none; }
+
+.tag { display:inline-block; padding:2px 10px; border-radius:5px; font-size:0.62rem; font-weight:500; margin:2px 2px 0 0; border:1px solid; }
+.tag.wa { color:var(--wa); border-color:rgba(37,211,102,0.25); background:rgba(37,211,102,0.07); }
+.tag.node { color:var(--node); border-color:rgba(240,165,0,0.25); background:rgba(240,165,0,0.07); }
+.tag.ai { color:var(--ai); border-color:rgba(74,158,255,0.25); background:rgba(74,158,255,0.07); }
+.tag.db { color:var(--db); border-color:rgba(168,85,247,0.25); background:rgba(168,85,247,0.07); }
+.tag.crm { color:var(--crm); border-color:rgba(255,107,53,0.25); background:rgba(255,107,53,0.07); }
+.tag.infra { color:var(--infra); border-color:rgba(16,185,129,0.25); background:rgba(16,185,129,0.07); }
+.tag.red { color:var(--red); border-color:rgba(239,68,68,0.25); background:rgba(239,68,68,0.07); }
+
+.chat-demo { background:var(--surface2); border:1px solid var(--border); border-radius:14px; overflow:hidden; margin-bottom:2rem; }
+.chat-header { padding:12px 18px; border-bottom:1px solid var(--border); display:flex; align-items:center; gap:10px; }
+.chat-header .avatar { width:32px; height:32px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:0.9rem; }
+.chat-body { padding:16px 18px; display:flex; flex-direction:column; gap:10px; max-height:400px; overflow-y:auto; }
+.msg { max-width:80%; padding:10px 14px; border-radius:12px; font-size:0.74rem; line-height:1.6; }
+.msg.user { align-self:flex-end; background:rgba(37,211,102,0.15); border:1px solid rgba(37,211,102,0.3); border-bottom-right-radius:4px; }
+.msg.ai { align-self:flex-start; background:rgba(74,158,255,0.1); border:1px solid rgba(74,158,255,0.25); border-bottom-left-radius:4px; }
+.msg.system { align-self:center; background:rgba(255,255,255,0.03); border:1px solid var(--border); font-size:0.65rem; color:var(--muted); border-radius:8px; }
+.msg .json { margin-top:8px; padding:8px 10px; background:rgba(0,0,0,0.3); border-radius:6px; font-size:0.65rem; color:#A8C0D0; }
+
+footer { position:relative; z-index:1; border-top:1px solid var(--border); padding:2rem; text-align:center; font-size:0.68rem; color:var(--muted); letter-spacing:0.05em; }
+
+.fade-up { opacity:0; transform:translateY(20px); animation:fadeUp 0.5s ease forwards; }
+@keyframes fadeUp { to { opacity:1; transform:translateY(0); } }
+.delay-1 { animation-delay:0.1s; } .delay-2 { animation-delay:0.2s; } .delay-3 { animation-delay:0.3s; }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-logo"><div class="dot-logo">✈</div> TravelMind</div>
+  <span style="color:var(--muted);font-size:0.7rem;">/ Technical Integration Flow</span>
+  <div class="nav-tabs">
+    <div class="nav-tab active" data-target="sec-flow">Message Flow</div>
+    <div class="nav-tab" data-target="sec-ai">AI Engine</div>
+    <div class="nav-tab" data-target="sec-memory">Memory</div>
+    <div class="nav-tab" data-target="sec-cost">Cost</div>
+    <div class="nav-tab" data-target="sec-safety">Safety</div>
+  </div>
+  <span class="nav-badge">v1.0 — Engineering Docs</span>
+</nav>
+
+<div class="hero fade-up">
+  <div class="hero-label"><div class="pulse"></div> Technical Integration — Engineer's Reference</div>
+  <h1>How Technologies<br><span>Connect & Work</span></h1>
+  <p>Har technology kaise integrate hoti hai, data kahan se kahan jaata hai, AI kaise kaam karta hai, costs kya hain — sab kuch ek jagah, engineering level pe.</p>
+</div>
+
+<main>
+
+<!-- ═══════════ SECTION 1: MESSAGE FLOW ═══════════ -->
+<div class="sec-label" id="sec-flow" data-section>01 — Complete Message Flow</div>
+
+<div class="flow-diagram fade-up delay-1" data-label="// INBOUND MESSAGE FLOW">
+  <div style="margin-bottom:20px">
+    <div class="flow-label">Step 1: Customer WhatsApp Message → Tera Server</div>
+    <div class="flow-row">
+      <div class="flow-node wa">📱 Customer WhatsApp</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--wa)"></div></div>
+      <div class="flow-node wa">📡 Meta Cloud API</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--wa);animation-delay:0.3s"></div></div>
+      <div class="flow-node node">🔗 POST /webhook/whatsapp</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--node);animation-delay:0.6s"></div></div>
+      <div class="flow-node node">⚙️ Node.js (Railway/AWS)</div>
+    </div>
+  </div>
+  <div style="margin-bottom:20px">
+    <div class="flow-label">Step 2: Server Pre-Processing</div>
+    <div class="flow-row">
+      <div class="flow-node node">⚙️ Verify Signature</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--node)"></div></div>
+      <div class="flow-node db">🔴 Redis — Session Load</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--db);animation-delay:0.3s"></div></div>
+      <div class="flow-node db">🗄️ PostgreSQL — Last 10 msgs</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--node);animation-delay:0.6s"></div></div>
+      <div class="flow-node node">📋 Bull Queue</div>
+    </div>
+  </div>
+  <div style="margin-bottom:20px">
+    <div class="flow-label">Step 3: AI Processing (Queue Worker)</div>
+    <div class="flow-row">
+      <div class="flow-node node">📋 Queue Worker picks job</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--ai)"></div></div>
+      <div class="flow-node ai">🧠 Claude API Call (prompt + history + new msg)</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--ai);animation-delay:0.3s"></div></div>
+      <div class="flow-node ai">📝 JSON Response {reply, stage, intent}</div>
+    </div>
+  </div>
+  <div style="margin-bottom:20px">
+    <div class="flow-label">Step 4: Response Processing + Save</div>
+    <div class="flow-row">
+      <div class="flow-node ai">📝 Parse JSON</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--db)"></div></div>
+      <div class="flow-node db">🔴 Redis — Update stage</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--db);animation-delay:0.3s"></div></div>
+      <div class="flow-node db">🗄️ PostgreSQL — Save conversation</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--wa);animation-delay:0.6s"></div></div>
+      <div class="flow-node wa">📡 Meta API — Send reply</div>
+    </div>
+  </div>
+  <div>
+    <div class="flow-label">Step 5: If handover_needed = true</div>
+    <div class="flow-row">
+      <div class="flow-node ai">✅ handover_needed: true</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--ai)"></div></div>
+      <div class="flow-node ai">📋 Summary generate (Claude call)</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--crm);animation-delay:0.3s"></div></div>
+      <div class="flow-node crm">🏢 Lead → CRM Dashboard</div>
+      <div class="flow-edge"><div class="dot" style="background:var(--crm);animation-delay:0.6s"></div></div>
+      <div class="flow-node crm">📧 Email → Human Agent</div>
+    </div>
+  </div>
+</div>
+
+<!-- Key Points about the flow -->
+<div class="info-grid fade-up delay-1">
+  <div class="info-card wa">
+    <div class="card-icon" style="background:rgba(37,211,102,0.12)">📱</div>
+    <div class="card-label" style="color:var(--wa)">WhatsApp ↔ Server Connection</div>
+    <div class="card-title">Messages directly nahi aate</div>
+    <div class="card-desc">Customer ka message pehle Meta ke servers pe jaata hai. Meta tera registered webhook URL hit karta hai POST request se. Tera server kabhi customer ke phone se directly communicate nahi karta — hamesha Meta through.</div>
+    <div style="margin-top:10px">
+      <span class="tag wa">Webhook URL register</span>
+      <span class="tag wa">Meta Cloud API v18.0</span>
+      <span class="tag wa">HTTPS mandatory</span>
+    </div>
+  </div>
+  <div class="info-card node">
+    <div class="card-icon" style="background:rgba(240,165,0,0.12)">📋</div>
+    <div class="card-label" style="color:var(--node)">Bull Queue — Why?</div>
+    <div class="card-title">50 messages ek saath aaye toh?</div>
+    <div class="card-desc">Queue lagata hai — messages ek ek karke process hote hain (ya 3 parallel). Agar directly process karo aur Claude slow ho toh server hang hoga. Queue Redis-backed hai, fast hai, retry support hai.</div>
+    <div style="margin-top:10px">
+      <span class="tag node">Concurrency: 3</span>
+      <span class="tag node">Retry: 3 attempts</span>
+      <span class="tag node">Redis-backed</span>
+    </div>
+  </div>
+  <div class="info-card ai">
+    <div class="card-icon" style="background:rgba(74,158,255,0.12)">📡</div>
+    <div class="card-label" style="color:var(--ai)">Reply Kaise Jaata Hai Back?</div>
+    <div class="card-title">Server → Meta API → Customer</div>
+    <div class="card-desc">Claude se reply milne ke baad tera server Meta ke API ko HTTP POST karta hai (graph.facebook.com). Meta customer ke WhatsApp pe deliver karta hai. Same pipe — reverse direction.</div>
+    <div style="margin-top:10px">
+      <span class="tag ai">graph.facebook.com</span>
+      <span class="tag ai">Bearer Token Auth</span>
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 2: AI ENGINE ═══════════ -->
+<div class="sec-label" id="sec-ai" data-section>02 — AI Engine — How It Actually Works</div>
+
+<div class="info-grid fade-up delay-1">
+  <div class="info-card ai" style="grid-column: span 2">
+    <div class="card-icon" style="background:rgba(74,158,255,0.12)">🧠</div>
+    <div class="card-label" style="color:var(--ai)">CRITICAL — AI Ko "Train" Nahi Karte</div>
+    <div class="card-title">System Prompt = Agent ka Brain</div>
+    <div class="card-desc">Claude already trained hai billions of data pe. Tumhe sirf <strong>instructions</strong> deni hai har API call mein — isse System Prompt kehte hain. Yeh ek lambi text file hai (~2000-3000 words) jo define karti hai: agent kaun hai, kaise baat kare, kya rules hain, kaunse stages hain, response format kya hona chahiye. Yeh prompt har API call ke saath jaata hai. File change karo → behaviour change. No ML training needed.</div>
+    <div style="margin-top:10px">
+      <span class="tag ai">System Prompt = Fixed instructions</span>
+      <span class="tag ai">Sent every API call</span>
+      <span class="tag ai">File: prompts/travel-agent.txt</span>
+      <span class="tag ai">Change behaviour = edit file</span>
+    </div>
+  </div>
+</div>
+
+<!-- What goes in every API call -->
+<div class="flow-diagram fade-up delay-2" data-label="// EVERY CLAUDE API CALL STRUCTURE">
+  <div style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;margin-bottom:16px;">Har API Call Mein Kya Jaata Hai</div>
+  
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:20px">
+    <div style="background:rgba(74,158,255,0.06);border:1px solid rgba(74,158,255,0.2);border-radius:10px;padding:14px">
+      <div style="font-size:0.68rem;color:var(--ai);font-weight:600;margin-bottom:6px">📄 SYSTEM PROMPT (Cached)</div>
+      <div style="font-size:0.68rem;color:var(--muted);line-height:1.6">~2500 tokens • Same har baar • Prompt caching se 90% cost saved • Agent rules, tone, format, stages defined</div>
+    </div>
+    <div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:14px">
+      <div style="font-size:0.68rem;color:var(--db);font-weight:600;margin-bottom:6px">💬 CONVERSATION HISTORY</div>
+      <div style="font-size:0.68rem;color:var(--muted);line-height:1.6">Summary of old msgs (~200 tokens) + Last 10 messages (user/AI alternating) + Current stage from Redis</div>
+    </div>
+    <div style="background:rgba(37,211,102,0.06);border:1px solid rgba(37,211,102,0.2);border-radius:10px;padding:14px">
+      <div style="font-size:0.68rem;color:var(--wa);font-weight:600;margin-bottom:6px">📨 NEW USER MESSAGE</div>
+      <div style="font-size:0.68rem;color:var(--muted);line-height:1.6">Latest message from customer • ~50 tokens • Added as last item in messages array</div>
+    </div>
+  </div>
+
+  <div style="text-align:center;color:var(--muted);font-size:0.7rem;margin-bottom:12px">▼ Claude processes all of the above and returns ▼</div>
+
+  <div style="background:rgba(74,158,255,0.08);border:1px solid rgba(74,158,255,0.3);border-radius:10px;padding:16px">
+    <div style="font-size:0.68rem;color:var(--ai);font-weight:600;margin-bottom:8px">📝 STRUCTURED JSON RESPONSE — Every Single Time</div>
+    <div class="code-block" style="margin:0" data-lang="json">
+{<br>
+&nbsp;&nbsp;<span class="str">"reply"</span>: <span class="str">"Customer ko dikhne wala message"</span>,<br>
+&nbsp;&nbsp;<span class="str">"stage"</span>: <span class="str">"discovery | building | review | confirmation | handover"</span>,<br>
+&nbsp;&nbsp;<span class="str">"intent"</span>: <span class="str">"greeting | destination_query | confirm | reject..."</span>,<br>
+&nbsp;&nbsp;<span class="str">"handover_needed"</span>: <span class="kw">false</span><br>
+}
+    </div>
+    <div style="font-size:0.65rem;color:var(--muted);margin-top:8px">Customer ko sirf "reply" field jaata hai. Baaki fields backend ke decisions ke liye hain.</div>
+  </div>
+</div>
+
+<!-- Conversation Stages -->
+<div class="flow-diagram fade-up delay-2" data-label="// CONVERSATION STAGES">
+  <div style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;margin-bottom:16px">Conversation Stages — AI Automatically Tracks</div>
+  <div class="flow-row" style="flex-wrap:nowrap">
+    <div class="flow-node wa">🔍 discovery</div>
+    <div class="flow-edge"><div class="dot" style="background:var(--wa)"></div></div>
+    <div class="flow-node node">🏗️ building</div>
+    <div class="flow-edge"><div class="dot" style="background:var(--node);animation-delay:0.4s"></div></div>
+    <div class="flow-node ai">📋 review</div>
+    <div class="flow-edge"><div class="dot" style="background:var(--ai);animation-delay:0.8s"></div></div>
+    <div class="flow-node infra">✅ confirmation</div>
+    <div class="flow-edge"><div class="dot" style="background:var(--crm);animation-delay:1.2s"></div></div>
+    <div class="flow-node crm">🤝 handover</div>
+  </div>
+  <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:16px">
+    <div style="font-size:0.62rem;color:var(--muted);text-align:center;line-height:1.5">Customer casually asking about destinations, dates</div>
+    <div style="font-size:0.62rem;color:var(--muted);text-align:center;line-height:1.5">Specifics shared — budget, people, preferences</div>
+    <div style="font-size:0.62rem;color:var(--muted);text-align:center;line-height:1.5">Itinerary ready, customer reviewing, modifications</div>
+    <div style="font-size:0.62rem;color:var(--muted);text-align:center;line-height:1.5">Customer says "pakka", "book karo"</div>
+    <div style="font-size:0.62rem;color:var(--muted);text-align:center;line-height:1.5">Human agent takes over for pricing & booking</div>
+  </div>
+</div>
+
+<!-- Live Chat Demo -->
+<div class="chat-demo fade-up delay-2">
+  <div class="chat-header">
+    <div class="avatar" style="background:rgba(37,211,102,0.15)">📱</div>
+    <div>
+      <div style="font-size:0.78rem;font-weight:600">Live Conversation Example</div>
+      <div style="font-size:0.62rem;color:var(--muted)">Customer ↔ AI Agent • Stage transitions shown</div>
+    </div>
+  </div>
+  <div class="chat-body">
+    <div class="msg system">🟢 Stage: discovery</div>
+    <div class="msg user">Hi! Goa jaana hai 3 din</div>
+    <div class="msg ai">Hey! 🏖️ Goa ka kya plan hai? Kitne log, budget batao roughly!
+      <div class="json">{"stage": "discovery", "intent": "destination_query"}</div>
+    </div>
+    <div class="msg user">2 adults, 50k budget, beaches + nightlife</div>
+    <div class="msg system">🟡 Stage: discovery → building</div>
+    <div class="msg ai">Perfect combo! 🎉 Yeh raha plan:<br>Day 1: North Goa — Baga, Calangute, Tito's Lane<br>Day 2: South Goa — Palolem, Cabo de Rama<br>Day 3: Old Goa + Dudhsagar option<br><br>Hotel 3-star ya 4-star?
+      <div class="json">{"stage": "building", "intent": "itinerary_requested"}</div>
+    </div>
+    <div class="msg user">4 star. Aur Day 2 mein water sports bhi add karo</div>
+    <div class="msg ai">Done! 🏄 Updated:<br>Day 2: Parasailing + Jet Ski (morning) → Palolem Beach (afternoon)<br>Hotel: Country Inn / Taj Fort Aguada suggest kar raha hoon<br><br>Full plan confirm karein?
+      <div class="json">{"stage": "review", "intent": "modification_request"}</div>
+    </div>
+    <div class="msg user">Haan pakka, yeh final hai. Book karo!</div>
+    <div class="msg system">🔴 Stage: review → confirmation → handover triggered!</div>
+    <div class="msg ai">Awesome! 🎉 Aapka Goa trip plan locked hai! Humare travel expert aapko pricing aur booking details bhejenge 30 min mein!
+      <div class="json">{"stage": "confirmation", "intent": "confirm", <span style="color:var(--red)">"handover_needed": true</span>}</div>
+    </div>
+    <div class="msg system">👨‍💼 → Lead created in CRM → Human agent notified via email</div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 3: MEMORY ═══════════ -->
+<div class="sec-label" id="sec-memory" data-section>03 — Conversation Memory & Data Retention</div>
+
+<div class="flow-diagram fade-up delay-1" data-label="// MEMORY ARCHITECTURE">
+  <div style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;margin-bottom:16px">Memory Layers — Kya Kahan Store Hota Hai</div>
+  <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:14px">
+    <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:10px;padding:16px">
+      <div style="font-size:1.2rem;margin-bottom:6px">⚡</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--red);margin-bottom:4px">Redis — Hot Memory</div>
+      <div style="font-size:0.68rem;color:var(--muted);line-height:1.6;margin-bottom:8px">Active session data. Current stage, conversation summary, mode (AI/human). Ultra fast reads.</div>
+      <div style="font-size:0.62rem;padding:6px 10px;background:rgba(0,0,0,0.3);border-radius:6px;color:#A8C0D0">
+        TTL: <span style="color:var(--red);font-weight:600">6 hours</span><br>After 6hrs no message → auto-expires<br>New message → fresh session created
+      </div>
+    </div>
+    <div style="background:rgba(168,85,247,0.06);border:1px solid rgba(168,85,247,0.2);border-radius:10px;padding:16px">
+      <div style="font-size:1.2rem;margin-bottom:6px">🗄️</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--db);margin-bottom:4px">PostgreSQL — Permanent Memory</div>
+      <div style="font-size:0.68rem;color:var(--muted);line-height:1.6;margin-bottom:8px">All conversations, customer profiles, leads data. Used to load last 10 messages for AI context.</div>
+      <div style="font-size:0.62rem;padding:6px 10px;background:rgba(0,0,0,0.3);border-radius:6px;color:#A8C0D0">
+        Retention: <span style="color:var(--db);font-weight:600">90 days</span><br>Cron job deletes older chats<br>Booking records: 1 year
+      </div>
+    </div>
+    <div style="background:rgba(74,158,255,0.06);border:1px solid rgba(74,158,255,0.2);border-radius:10px;padding:16px">
+      <div style="font-size:1.2rem;margin-bottom:6px">🧠</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--ai);margin-bottom:4px">Claude Context — Per Request</div>
+      <div style="font-size:0.68rem;color:var(--muted);line-height:1.6;margin-bottom:8px">Summary of old msgs + last 10 messages sent each API call. Claude has NO memory between calls — you give it memory.</div>
+      <div style="font-size:0.62rem;padding:6px 10px;background:rgba(0,0,0,0.3);border-radius:6px;color:#A8C0D0">
+        Window: <span style="color:var(--ai);font-weight:600">~10 messages + summary</span><br>Claude remembers NOTHING<br>YOU provide memory each time
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="info-grid fade-up delay-2">
+  <div class="info-card db">
+    <div class="card-label" style="color:var(--db)">Sliding Window Strategy</div>
+    <div class="card-title">100 messages wali conversation mein bhi cost controlled</div>
+    <div class="card-desc">Message 1-90 ka AI-generated summary (~200 tokens) + Message 91-100 full text (~1500 tokens). Instead of 100 messages (20K tokens) → sirf 1700 tokens. Cost 12x kam.</div>
+    <div class="code-block" data-lang="logic" style="margin-top:10px">
+<span class="cmt">// Har 10 messages pe summary regenerate</span><br>
+<span class="kw">if</span> (totalMessages > <span class="num">10</span>) {<br>
+&nbsp;&nbsp;<span class="cmt">// Summarize messages 1 to (total-10)</span><br>
+&nbsp;&nbsp;summary = <span class="kw">await</span> claude(<span class="str">"Summarize this conversation..."</span>);<br>
+&nbsp;&nbsp;<span class="kw">await</span> redis.<span class="fn">set</span>(<span class="str">`session:${phone}:summary`</span>, summary);<br>
+}
+    </div>
+  </div>
+  <div class="info-card ai">
+    <div class="card-label" style="color:var(--ai)">24-Hour Window Rule (WhatsApp)</div>
+    <div class="card-title">Meta ka strict rule — free reply sirf 24hr mein</div>
+    <div class="card-desc">Customer ka last message 24hr se purana → free-form reply nahi bhej sakte. Sirf pre-approved template message bhejo. Backend mein lastMessageAt track karo. Auto-detect: agar gap > 24hrs → template bhejo.</div>
+    <div style="margin-top:10px">
+      <span class="tag ai">Templates: itinerary_ready, pricing_update, follow_up</span>
+    </div>
+    <div class="code-block" data-lang="logic" style="margin-top:10px">
+<span class="kw">if</span> (now - lastMessageAt > <span class="num">24</span> * <span class="num">60</span> * <span class="num">60</span> * <span class="num">1000</span>) {<br>
+&nbsp;&nbsp;<span class="fn">sendTemplate</span>(<span class="str">"pricing_update"</span>, { name, destination, price });<br>
+} <span class="kw">else</span> {<br>
+&nbsp;&nbsp;<span class="fn">sendFreeReply</span>(aiResponse.reply);<br>
+}
+    </div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 4: HUMAN HANDOVER ═══════════ -->
+<div class="sec-label" id="sec-handover" data-section>04 — Human Agent ↔ AI Handover</div>
+
+<div class="flow-diagram fade-up delay-1" data-label="// MODE SWITCHING">
+  <div style="font-family:'Syne',sans-serif;font-size:0.85rem;font-weight:700;margin-bottom:16px">Mode System — Kab AI, Kab Human</div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;margin-bottom:16px">
+    <div style="background:rgba(74,158,255,0.08);border:1px solid rgba(74,158,255,0.3);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:1.5rem;margin-bottom:4px">🤖</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--ai)">mode = "ai"</div>
+      <div style="font-size:0.62rem;color:var(--muted);margin-top:4px">Default. AI processes all messages.</div>
+    </div>
+    <div style="background:rgba(255,107,53,0.08);border:1px solid rgba(255,107,53,0.3);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:1.5rem;margin-bottom:4px">👨‍💼</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--crm)">mode = "human"</div>
+      <div style="font-size:0.62rem;color:var(--muted);margin-top:4px">Human agent active. AI paused. Messages go to dashboard only.</div>
+    </div>
+    <div style="background:rgba(16,185,129,0.08);border:1px solid rgba(16,185,129,0.3);border-radius:10px;padding:14px;text-align:center">
+      <div style="font-size:1.5rem;margin-bottom:4px">🔄</div>
+      <div style="font-size:0.72rem;font-weight:600;color:var(--infra)">Handback</div>
+      <div style="font-size:0.62rem;color:var(--muted);margin-top:4px">Human clicks "Return to AI" → mode = "ai" again.</div>
+    </div>
+  </div>
+  <div class="code-block" data-lang="logic">
+<span class="cmt">// Incoming message handler</span><br>
+<span class="kw">const</span> mode = <span class="kw">await</span> redis.<span class="fn">get</span>(<span class="str">`session:${phone}:mode`</span>) || <span class="str">'ai'</span>;<br><br>
+<span class="kw">if</span> (mode === <span class="str">'ai'</span>) {<br>
+&nbsp;&nbsp;<span class="cmt">// Normal flow — send to Claude, get response, reply</span><br>
+&nbsp;&nbsp;<span class="kw">await</span> <span class="fn">processWithAI</span>(phone, message);<br>
+} <span class="kw">else if</span> (mode === <span class="str">'human'</span>) {<br>
+&nbsp;&nbsp;<span class="cmt">// Just save message, show on dashboard, NO AI call</span><br>
+&nbsp;&nbsp;<span class="kw">await</span> <span class="fn">saveAndNotifyDashboard</span>(phone, message);<br>
+}
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 5: COST ═══════════ -->
+<div class="sec-label" id="sec-cost" data-section>05 — Cost Analysis (100 msgs/conversation)</div>
+
+<div class="cost-table fade-up delay-1">
+  <table>
+    <thead><tr><th>Technique</th><th>What it does</th><th>Savings</th><th>Per Conversation</th></tr></thead>
+    <tbody>
+      <tr><td>❌ No optimization</td><td>All 50 AI calls with full history, Sonnet</td><td>—</td><td style="color:var(--red)">₹65</td></tr>
+      <tr><td>Prompt Caching</td><td>System prompt cached, 90% off on 2500 tokens</td><td>~40%</td><td>₹39</td></tr>
+      <tr><td>Sliding Window</td><td>Summary + last 10 msgs instead of all</td><td>~50%</td><td>₹20</td></tr>
+      <tr><td>Greeting Filter</td><td>"ok", "thanks", "hmm" → no AI call</td><td>~30% fewer calls</td><td>₹17</td></tr>
+      <tr class="highlight"><td>Haiku for casual msgs</td><td>"thik hai", "aur batao" → cheap model</td><td>12x cheaper</td><td style="color:var(--ai)"><strong>₹15</strong></td></tr>
+    </tbody>
+    <tfoot><tr><td colspan="3"><strong>Optimized: 100 msgs/conversation</strong></td><td>₹15-17</td></tr></tfoot>
+  </table>
+</div>
+
+<div class="cost-table fade-up delay-2">
+  <table>
+    <thead><tr><th>Scale</th><th>Conversations/month</th><th>AI Cost (Optimized)</th><th>vs Human Agent (₹25K salary)</th></tr></thead>
+    <tbody>
+      <tr><td>Starting</td><td>100</td><td>₹1,700</td><td style="color:var(--wa)">14x cheaper</td></tr>
+      <tr class="highlight"><td>Growing</td><td>500</td><td>₹8,500</td><td style="color:var(--wa)">3x cheaper + 24/7</td></tr>
+      <tr><td>Scale</td><td>2,000</td><td>₹34,000</td><td style="color:var(--wa)">Still 1 agent cost for 2000 convos</td></tr>
+    </tbody>
+    <tfoot><tr><td colspan="3"><strong>Deal value ₹50,000+ → AI cost ₹17 per deal = 0.03%</strong></td><td>✅ No brainer</td></tr></tfoot>
+  </table>
+</div>
+
+<div class="info-grid fade-up delay-2">
+  <div class="info-card infra">
+    <div class="card-label" style="color:var(--infra)">Gemini Flash Alternative</div>
+    <div class="card-title">Budget tight ho toh — ₹2.5/conversation</div>
+    <div class="card-desc">Gemini 2.0 Flash: Input $0.10/1M, Output $0.40/1M. 500 conversations = ₹1,250/month total. Quality slightly less conversational than Claude, but 90% cases mein kaam chalega.</div>
+  </div>
+  <div class="info-card ai">
+    <div class="card-label" style="color:var(--ai)">Hybrid Approach (Best)</div>
+    <div class="card-title">Gemini for simple + Claude for complex</div>
+    <div class="card-desc">Simple messages (greet, "ok", casual) → Gemini Flash. Complex (itinerary, modifications, summarization) → Claude Sonnet. Best of both: quality + cost. ~₹400-500/month for 500 convos.</div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 6: SAFETY ═══════════ -->
+<div class="sec-label" id="sec-safety" data-section>06 — Error Handling, Security & Safety Nets</div>
+
+<div class="info-grid fade-up delay-1">
+  <div class="info-card red">
+    <div class="card-icon" style="background:rgba(239,68,68,0.12)">💥</div>
+    <div class="card-label" style="color:var(--red)">Claude API Down/Slow</div>
+    <div class="card-title">Fallback reply + Queue retry</div>
+    <div class="card-desc">Pre-written fallback: "Abhi system thoda busy hai, 2 min mein reply karte hain." Bull queue mein retry — 3 attempts with 30s gap. After 3 fails → alert to admin + save message for manual reply.</div>
+  </div>
+  <div class="info-card red">
+    <div class="card-icon" style="background:rgba(239,68,68,0.12)">🔐</div>
+    <div class="card-label" style="color:var(--red)">Webhook Security</div>
+    <div class="card-title">Signature verification mandatory</div>
+    <div class="card-desc">Meta sends X-Hub-Signature-256 header. Verify HMAC-SHA256 hash before processing. Reject unsigned/invalid requests with 403. Rate limit: same phone 10+ msgs in 1 min → temp block.</div>
+  </div>
+  <div class="info-card yellow">
+    <div class="card-icon" style="background:rgba(234,179,8,0.12)">🔄</div>
+    <div class="card-label" style="color:var(--yellow)">JSON Parse Failure</div>
+    <div class="card-title">Claude ne format todha toh?</div>
+    <div class="card-desc">try-catch around JSON.parse. If fails → send Claude's raw text as reply, keep stage unchanged. Happens &lt;1% of time. Better: use Anthropic tool_use for 99.9% guaranteed JSON.</div>
+  </div>
+  <div class="info-card yellow">
+    <div class="card-icon" style="background:rgba(234,179,8,0.12)">🌐</div>
+    <div class="card-label" style="color:var(--yellow)">WhatsApp API Failure</div>
+    <div class="card-title">Reply send nahi hua toh?</div>
+    <div class="card-desc">Save reply in DB with status: "pending". Cron job every 1 minute retries pending messages. Max 5 retries. After that → mark failed + notify admin. Customer kabhi blank nahi rehna chahiye.</div>
+  </div>
+  <div class="info-card infra">
+    <div class="card-icon" style="background:rgba(16,185,129,0.12)">🧪</div>
+    <div class="card-label" style="color:var(--infra)">Testing Strategy</div>
+    <div class="card-title">Real WhatsApp ke bina test karo</div>
+    <div class="card-desc">Meta provides test phone number for sandbox. NODE_ENV=development → mock all WhatsApp calls, log to console. Postman collection for API testing. Jest for unit tests on message processing logic.</div>
+  </div>
+  <div class="info-card infra">
+    <div class="card-icon" style="background:rgba(16,185,129,0.12)">📊</div>
+    <div class="card-label" style="color:var(--infra)">Analytics (Auto-collected)</div>
+    <div class="card-title">Dashboard pe 4 key metrics</div>
+    <div class="card-desc">Response time (msg timestamp diff) • Conversion rate (confirmations ÷ total) • Drop-off (no reply > 7 days before confirm) • Popular destinations (extracted from AI intent). All from existing PostgreSQL data.</div>
+  </div>
+</div>
+
+<!-- ═══════════ SECTION 7: HOSTING MAP ═══════════ -->
+<div class="sec-label" id="sec-hosting" data-section>07 — Where Everything Lives</div>
+
+<div class="cost-table fade-up delay-1">
+  <table>
+    <thead><tr><th>Component</th><th>Hosted On</th><th>Why Here</th><th>Cost</th></tr></thead>
+    <tbody>
+      <tr><td>⚙️ Node.js Server</td><td style="color:var(--node)">Railway.app → AWS EC2</td><td>Main backend, webhook receiver</td><td>₹700-1500</td></tr>
+      <tr><td>🗄️ PostgreSQL</td><td style="color:var(--db)">Railway Postgres</td><td>Conversations, leads, profiles</td><td>₹0-600</td></tr>
+      <tr><td>🔴 Redis</td><td style="color:var(--red)">Upstash (serverless)</td><td>Sessions, queue, fast cache</td><td>₹0 (free tier)</td></tr>
+      <tr><td>🖥️ Admin Dashboard</td><td style="color:var(--infra)">Vercel (free)</td><td>Next.js, auto CDN, free deploy</td><td>₹0</td></tr>
+      <tr><td>🧠 Claude API</td><td style="color:var(--ai)">Anthropic's servers</td><td>You just make API calls</td><td>Pay per token</td></tr>
+      <tr><td>📱 WhatsApp API</td><td style="color:var(--wa)">Meta's servers</td><td>You register webhook, Meta handles rest</td><td>1000 free/month</td></tr>
+      <tr><td>🌐 Domain + SSL</td><td style="color:var(--muted)">Cloudflare</td><td>Free DNS, SSL, DDoS protection</td><td>₹0</td></tr>
+      <tr><td>📄 System Prompts</td><td style="color:var(--muted)">Git repo (codebase)</td><td>Version controlled, deploy pe update</td><td>₹0</td></tr>
+    </tbody>
+    <tfoot><tr><td colspan="3"><strong>Total Infrastructure Cost</strong></td><td>₹700-2100/month</td></tr></tfoot>
+  </table>
+</div>
+
+</main>
+
+<footer>
+  TravelMind AI — Technical Integration Flow v1.0 &nbsp;|&nbsp;
+  Engineering Reference Document &nbsp;|&nbsp;
+  Last updated: April 2026
+</footer>
+
+<script>
+const tabs=document.querySelectorAll('.nav-tab'),sections=document.querySelectorAll('[data-section]');
+tabs.forEach(t=>t.addEventListener('click',()=>{const id=t.getAttribute('data-target');if(!id)return;const el=document.getElementById(id);if(el){const h=document.querySelector('nav').offsetHeight;window.scrollTo({top:el.getBoundingClientRect().top+window.scrollY-h-16,behavior:'smooth'})}tabs.forEach(x=>x.classList.remove('active'));t.classList.add('active')}));
+function spy(){const h=document.querySelector('nav').offsetHeight+40;let c='';sections.forEach(s=>{if(s.getBoundingClientRect().top<=h)c=s.id});if(c)tabs.forEach(t=>{t.getAttribute('data-target')===c?t.classList.add('active'):t.classList.remove('active')})}
+window.addEventListener('scroll',spy,{passive:true});spy();
+</script>
+
+</body>
+</html>

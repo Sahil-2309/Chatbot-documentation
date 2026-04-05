@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>TravelMind AI — System Architecture</title>
+  <link
+    href="https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=JetBrains+Mono:wght@300;400;500;700&display=swap"
+    rel="stylesheet">
+  <style>
+    :root {
+      --bg: #080C10;
+      --surface: #0D1318;
+      --surface2: #111820;
+      --border: rgba(255, 255, 255, 0.06);
+      --border2: rgba(255, 255, 255, 0.12);
+      --text: #E8EDF2;
+      --muted: #5A6A7A;
+      --dim: #2A3540;
+
+      --wa: #25D366;
+      --wa2: #128C7E;
+      --node: #F0A500;
+      --ai: #4A9EFF;
+      --ai2: #0060D0;
+      --db: #A855F7;
+      --db2: #6B21A8;
+      --crm: #FF6B35;
+      --crm2: #C44A1A;
+      --infra: #10B981;
+      --infra2: #065F46;
+    }
+
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: 'JetBrains Mono', monospace;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+
+    /* Grid background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(74, 158, 255, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(74, 158, 255, 0.03) 1px, transparent 1px);
+      background-size: 40px 40px;
+      pointer-events: none;
+      z-index: 0;
+    }
+
+    /* ── NAV ── */
+    nav {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      background: rgba(8, 12, 16, 0.92);
+      backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      padding: 0 2rem;
+      display: flex;
+      align-items: center;
+      height: 58px;
+      gap: 24px;
+    }
+
+    .nav-logo {
+      font-family: 'Syne', sans-serif;
+      font-weight: 800;
+      font-size: 1rem;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-logo .dot-logo {
+      width: 28px;
+      height: 28px;
+      border-radius: 7px;
+      background: linear-gradient(135deg, var(--ai), var(--wa));
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+    }
+
+    .nav-tabs {
+      display: flex;
+      gap: 4px;
+      margin-left: auto;
+    }
+
+    .nav-tab {
+      padding: 5px 14px;
+      border-radius: 6px;
+      font-size: 0.7rem;
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      color: var(--muted);
+      cursor: pointer;
+      transition: all 0.2s;
+      border: 1px solid transparent;
+    }
+
+    .nav-tab:hover,
+    .nav-tab.active {
+      color: var(--text);
+      border-color: var(--border2);
+      background: var(--surface);
+    }
+
+    .nav-tab.active {
+      position: relative;
+    }
+
+    .nav-tab.active::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: 20%;
+      right: 20%;
+      height: 2px;
+      border-radius: 2px;
+      background: linear-gradient(90deg, var(--ai), var(--wa));
+      animation: tabGlow 2s ease infinite;
+    }
+
+    @keyframes tabGlow {
+
+      0%,
+      100% {
+        opacity: 0.7;
+      }
+
+      50% {
+        opacity: 1;
+      }
+    }
+
+    .nav-badge {
+      margin-left: 8px;
+      padding: 3px 10px;
+      border-radius: 999px;
+      background: rgba(74, 158, 255, 0.1);
+      border: 1px solid rgba(74, 158, 255, 0.25);
+      font-size: 0.65rem;
+      color: var(--ai);
+      letter-spacing: 0.08em;
+    }
+
+    /* ── HERO ── */
+    .hero {
+      position: relative;
+      z-index: 1;
+      padding: 5rem 2rem 3rem;
+      text-align: center;
+    }
+
+    .hero-label {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 5px 14px;
+      border-radius: 999px;
+      border: 1px solid rgba(74, 158, 255, 0.3);
+      background: rgba(74, 158, 255, 0.06);
+      font-size: 0.68rem;
+      letter-spacing: 0.12em;
+      color: var(--ai);
+      text-transform: uppercase;
+      margin-bottom: 1.5rem;
+    }
+
+    .pulse {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--ai);
+      animation: pulse 2s infinite;
+    }
+
+    @keyframes pulse {
+
+      0%,
+      100% {
+        opacity: 1;
+        transform: scale(1);
+      }
+
+      50% {
+        opacity: 0.4;
+        transform: scale(0.6);
+      }
+    }
+
+    .hero h1 {
+      font-family: 'Syne', sans-serif;
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      line-height: 1.1;
+      letter-spacing: -0.02em;
+      margin-bottom: 1rem;
+    }
+
+    .hero h1 span {
+      color: var(--ai);
+    }
+
+    .hero p {
+      color: var(--muted);
+      font-size: 0.85rem;
+      max-width: 600px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.8;
+    }
+
+    .version-chips {
+      display: flex;
+      justify-content: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .vchip {
+      padding: 4px 12px;
+      border-radius: 999px;
+      font-size: 0.65rem;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      border: 1px solid;
+    }
+
+    .vchip.green {
+      color: var(--wa);
+      border-color: rgba(37, 211, 102, 0.3);
+      background: rgba(37, 211, 102, 0.06);
+    }
+
+    .vchip.blue {
+      color: var(--ai);
+      border-color: rgba(74, 158, 255, 0.3);
+      background: rgba(74, 158, 255, 0.06);
+    }
+
+    .vchip.purple {
+      color: #A855F7;
+      border-color: rgba(168, 85, 247, 0.3);
+      background: rgba(168, 85, 247, 0.06);
+    }
+
+    .vchip.orange {
+      color: var(--crm);
+      border-color: rgba(255, 107, 53, 0.3);
+      background: rgba(255, 107, 53, 0.06);
+    }
+
+    /* ── MAIN CONTENT ── */
+    main {
+      position: relative;
+      z-index: 1;
+      padding: 0 2rem 4rem;
+      max-width: 1300px;
+      margin: 0 auto;
+    }
+
+    /* ── SECTION LABEL ── */
+    .sec-label {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 0.65rem;
+      letter-spacing: 0.15em;
+      text-transform: uppercase;
+      color: var(--muted);
+      margin-bottom: 1.5rem;
+      margin-top: 3rem;
+    }
+
+    .sec-label::after {
+      content: '';
+      flex: 1;
+      height: 1px;
+      background: var(--border);
+    }
+
+    /* ── ARCHITECTURE FLOW ── */
+    .arch-flow {
+      display: grid;
+      grid-template-columns: 1fr 60px 1fr 60px 1fr 60px 1fr;
+      gap: 0;
+      align-items: start;
+      margin-bottom: 2rem;
+    }
+
+    .arch-column {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .arch-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 28px;
+      color: var(--muted);
+      font-size: 1.2rem;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .arch-arrow .flow-line {
+      width: 2px;
+      height: 40px;
+      background: linear-gradient(to bottom, transparent, var(--muted), transparent);
+    }
+
+    .arch-arrow.animated .flow-line {
+      animation: flowDown 1.5s infinite linear;
+      background: linear-gradient(to bottom, transparent, var(--ai), transparent);
+    }
+
+    @keyframes flowDown {
+      0% {
+        opacity: 0.3;
+      }
+
+      50% {
+        opacity: 1;
+      }
+
+      100% {
+        opacity: 0.3;
+      }
+    }
+
+    .layer-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 18px;
+      cursor: pointer;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .layer-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      border-radius: 14px 14px 0 0;
+    }
+
+    .layer-card.wa::before {
+      background: linear-gradient(90deg, var(--wa), var(--wa2));
+    }
+
+    .layer-card.node::before {
+      background: linear-gradient(90deg, var(--node), #C07800);
+    }
+
+    .layer-card.ai::before {
+      background: linear-gradient(90deg, var(--ai), var(--ai2));
+    }
+
+    .layer-card.db::before {
+      background: linear-gradient(90deg, var(--db), var(--db2));
+    }
+
+    .layer-card.crm::before {
+      background: linear-gradient(90deg, var(--crm), var(--crm2));
+    }
+
+    .layer-card.infra::before {
+      background: linear-gradient(90deg, var(--infra), var(--infra2));
+    }
+
+    .layer-card:hover {
+      border-color: var(--border2);
+      transform: translateY(-2px);
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+    }
+
+    .card-icon {
+      font-size: 1.3rem;
+      margin-bottom: 10px;
+      width: 36px;
+      height: 36px;
+      border-radius: 9px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .card-icon.wa {
+      background: rgba(37, 211, 102, 0.12);
+    }
+
+    .card-icon.node {
+      background: rgba(240, 165, 0, 0.12);
+    }
+
+    .card-icon.ai {
+      background: rgba(74, 158, 255, 0.12);
+    }
+
+    .card-icon.db {
+      background: rgba(168, 85, 247, 0.12);
+    }
+
+    .card-icon.crm {
+      background: rgba(255, 107, 53, 0.12);
+    }
+
+    .card-icon.infra {
+      background: rgba(16, 185, 129, 0.12);
+    }
+
+    .card-label {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.72rem;
+      font-weight: 700;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      margin-bottom: 4px;
+    }
+
+    .card-label.wa {
+      color: var(--wa);
+    }
+
+    .card-label.node {
+      color: var(--node);
+    }
+
+    .card-label.ai {
+      color: var(--ai);
+    }
+
+    .card-label.db {
+      color: var(--db);
+    }
+
+    .card-label.crm {
+      color: var(--crm);
+    }
+
+    .card-label.infra {
+      color: var(--infra);
+    }
+
+    .card-title {
+      font-size: 0.88rem;
+      font-weight: 500;
+      margin-bottom: 6px;
+      line-height: 1.4;
+    }
+
+    .card-desc {
+      font-size: 0.72rem;
+      color: var(--muted);
+      line-height: 1.6;
+    }
+
+    .tech-tag {
+      display: inline-block;
+      padding: 2px 8px;
+      border-radius: 5px;
+      font-size: 0.62rem;
+      font-weight: 500;
+      margin: 2px 2px 0 0;
+      border: 1px solid;
+    }
+
+    .tech-tag.wa {
+      color: var(--wa);
+      border-color: rgba(37, 211, 102, 0.25);
+      background: rgba(37, 211, 102, 0.07);
+    }
+
+    .tech-tag.node {
+      color: var(--node);
+      border-color: rgba(240, 165, 0, 0.25);
+      background: rgba(240, 165, 0, 0.07);
+    }
+
+    .tech-tag.ai {
+      color: var(--ai);
+      border-color: rgba(74, 158, 255, 0.25);
+      background: rgba(74, 158, 255, 0.07);
+    }
+
+    .tech-tag.db {
+      color: var(--db);
+      border-color: rgba(168, 85, 247, 0.25);
+      background: rgba(168, 85, 247, 0.07);
+    }
+
+    .tech-tag.crm {
+      color: var(--crm);
+      border-color: rgba(255, 107, 53, 0.25);
+      background: rgba(255, 107, 53, 0.07);
+    }
+
+    .tech-tag.infra {
+      color: var(--infra);
+      border-color: rgba(16, 185, 129, 0.25);
+      background: rgba(16, 185, 129, 0.07);
+    }
+
+    /* ── HORIZONTAL ARROW ── */
+    .h-arrow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding-top: 58px;
+      color: var(--muted);
+      font-size: 1rem;
+      position: relative;
+    }
+
+    .h-arrow-line {
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(90deg, transparent, var(--muted) 50%, transparent);
+      position: absolute;
+    }
+
+    .h-arrow-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: var(--ai);
+      position: absolute;
+      animation: slideRight 2s infinite linear;
+    }
+
+    @keyframes slideRight {
+      0% {
+        left: 0%;
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 1;
+      }
+
+      100% {
+        left: 100%;
+        opacity: 0;
+      }
+    }
+
+    /* ── FULL FLOW DIAGRAM ── */
+    .flow-diagram {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .flow-diagram::before {
+      content: '// SYSTEM DATA FLOW';
+      position: absolute;
+      top: 16px;
+      right: 20px;
+      font-size: 0.62rem;
+      color: var(--dim);
+      letter-spacing: 0.1em;
+    }
+
+    .flow-row {
+      display: flex;
+      align-items: center;
+      gap: 0;
+      margin-bottom: 12px;
+    }
+
+    .flow-node {
+      padding: 10px 16px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 500;
+      border: 1px solid;
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+      cursor: default;
+    }
+
+    .flow-node:hover {
+      transform: scale(1.03);
+    }
+
+    .flow-node.wa {
+      color: var(--wa);
+      border-color: rgba(37, 211, 102, 0.4);
+      background: rgba(37, 211, 102, 0.08);
+    }
+
+    .flow-node.node {
+      color: var(--node);
+      border-color: rgba(240, 165, 0, 0.4);
+      background: rgba(240, 165, 0, 0.08);
+    }
+
+    .flow-node.ai {
+      color: var(--ai);
+      border-color: rgba(74, 158, 255, 0.4);
+      background: rgba(74, 158, 255, 0.08);
+    }
+
+    .flow-node.db {
+      color: var(--db);
+      border-color: rgba(168, 85, 247, 0.4);
+      background: rgba(168, 85, 247, 0.08);
+    }
+
+    .flow-node.crm {
+      color: var(--crm);
+      border-color: rgba(255, 107, 53, 0.4);
+      background: rgba(255, 107, 53, 0.08);
+    }
+
+    .flow-node.infra {
+      color: var(--infra);
+      border-color: rgba(16, 185, 129, 0.4);
+      background: rgba(16, 185, 129, 0.08);
+    }
+
+    .flow-edge {
+      flex: 1;
+      height: 2px;
+      position: relative;
+      min-width: 24px;
+      background: linear-gradient(90deg, var(--dim), var(--dim));
+      overflow: visible;
+    }
+
+    .flow-edge::after {
+      content: '▶';
+      position: absolute;
+      right: -2px;
+      top: 50%;
+      transform: translateY(-50%);
+      color: var(--dim);
+      font-size: 0.6rem;
+    }
+
+    .flow-edge .moving-dot {
+      position: absolute;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      animation: moveDot 2s infinite linear;
+    }
+
+    @keyframes moveDot {
+      0% {
+        left: 0;
+        opacity: 0;
+      }
+
+      10% {
+        opacity: 1;
+      }
+
+      90% {
+        opacity: 1;
+      }
+
+      100% {
+        left: calc(100% - 6px);
+        opacity: 0;
+      }
+    }
+
+    .flow-edge.wa-color .moving-dot {
+      background: var(--wa);
+    }
+
+    .flow-edge.node-color .moving-dot {
+      background: var(--node);
+    }
+
+    .flow-edge.ai-color .moving-dot {
+      background: var(--ai);
+    }
+
+    .flow-edge.db-color .moving-dot {
+      background: var(--db);
+    }
+
+    .flow-edge.crm-color .moving-dot {
+      background: var(--crm);
+    }
+
+    .flow-label {
+      font-size: 0.6rem;
+      color: var(--muted);
+      text-align: center;
+      margin-bottom: 2px;
+      letter-spacing: 0.05em;
+    }
+
+    /* ── TECH STACK GRID ── */
+    .tech-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+      gap: 14px;
+      margin-bottom: 2rem;
+    }
+
+    .tech-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+      transition: all 0.25s;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .tech-card:hover {
+      border-color: var(--border2);
+      box-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    .tech-card-header {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-bottom: 14px;
+    }
+
+    .tech-icon-big {
+      width: 42px;
+      height: 42px;
+      border-radius: 10px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.4rem;
+      flex-shrink: 0;
+    }
+
+    .tech-card-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 700;
+    }
+
+    .tech-card-sub {
+      font-size: 0.68rem;
+      color: var(--muted);
+      margin-top: 2px;
+    }
+
+    .tech-list {
+      list-style: none;
+    }
+
+    .tech-list li {
+      display: flex;
+      align-items: flex-start;
+      gap: 8px;
+      padding: 6px 0;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.74rem;
+      line-height: 1.5;
+    }
+
+    .tech-list li:last-child {
+      border: none;
+    }
+
+    .tech-list li::before {
+      content: '→';
+      color: var(--muted);
+      flex-shrink: 0;
+      margin-top: 1px;
+    }
+
+    .tech-list .tech-name {
+      font-weight: 500;
+      min-width: 90px;
+      flex-shrink: 0;
+    }
+
+    .tech-list .tech-role {
+      color: var(--muted);
+    }
+
+    /* ── DATA FLOW DETAIL ── */
+    .flow-detail {
+      background: var(--surface2);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .flow-detail-header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .flow-detail-header h3 {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+    }
+
+    .flow-steps-row {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .flow-step-item {
+      padding: 16px;
+      border-right: 1px solid var(--border);
+      position: relative;
+    }
+
+    .flow-step-item:last-child {
+      border-right: none;
+    }
+
+    .step-num-big {
+      font-family: 'Syne', sans-serif;
+      font-size: 2rem;
+      font-weight: 800;
+      opacity: 0.08;
+      position: absolute;
+      top: 8px;
+      right: 10px;
+      line-height: 1;
+    }
+
+    .step-icon {
+      font-size: 1.1rem;
+      margin-bottom: 6px;
+    }
+
+    .step-title-small {
+      font-size: 0.72rem;
+      font-weight: 600;
+      margin-bottom: 4px;
+    }
+
+    .step-tech-small {
+      font-size: 0.65rem;
+      color: var(--muted);
+    }
+
+    /* ── ENV SPLIT ── */
+    .env-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 14px;
+      margin-bottom: 2rem;
+    }
+
+    .env-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      padding: 20px;
+    }
+
+    .env-title {
+      font-family: 'Syne', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      margin-bottom: 14px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .env-row {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+      align-items: flex-start;
+    }
+
+    .env-key {
+      font-size: 0.7rem;
+      color: var(--muted);
+      min-width: 110px;
+      flex-shrink: 0;
+      padding-top: 1px;
+    }
+
+    .env-val {
+      font-size: 0.72rem;
+      font-weight: 500;
+    }
+
+    .env-code {
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      padding: 12px 14px;
+      margin-top: 12px;
+      font-size: 0.7rem;
+      color: #A8C0D0;
+      line-height: 1.8;
+    }
+
+    .kw {
+      color: var(--ai);
+    }
+
+    .str {
+      color: var(--wa);
+    }
+
+    .cmt {
+      color: var(--muted);
+    }
+
+    /* ── COST ESTIMATE ── */
+    .cost-table {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 14px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .cost-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .cost-table thead {
+      background: var(--surface2);
+    }
+
+    .cost-table th,
+    .cost-table td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 0.75rem;
+    }
+
+    .cost-table th {
+      color: var(--muted);
+      font-weight: 500;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      font-size: 0.65rem;
+    }
+
+    .cost-table td:last-child {
+      color: var(--infra);
+      font-weight: 600;
+    }
+
+    .cost-table tfoot td {
+      background: rgba(16, 185, 129, 0.06);
+      color: var(--infra);
+      font-weight: 700;
+      border: none;
+    }
+
+    /* ── FOOTER ── */
+    footer {
+      position: relative;
+      z-index: 1;
+      border-top: 1px solid var(--border);
+      padding: 2rem;
+      text-align: center;
+      font-size: 0.68rem;
+      color: var(--muted);
+      letter-spacing: 0.05em;
+    }
+
+    /* ── ANIMATIONS ── */
+    .fade-up {
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.5s ease forwards;
+    }
+
+    @keyframes fadeUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .delay-1 {
+      animation-delay: 0.1s;
+    }
+
+    .delay-2 {
+      animation-delay: 0.2s;
+    }
+
+    .delay-3 {
+      animation-delay: 0.3s;
+    }
+
+    .delay-4 {
+      animation-delay: 0.4s;
+    }
+  </style>
+</head>
+
+<body>
+
+  <!-- NAV -->
+  <nav>
+    <div class="nav-logo">
+      <div class="dot-logo">✈</div>
+      TravelMind
+    </div>
+    <span style="color:var(--muted);font-size:0.7rem;">/ System Architecture</span>
+    <div class="nav-tabs">
+      <div class="nav-tab active" data-target="sec-overview">Overview</div>
+      <div class="nav-tab" data-target="sec-techstack">Tech Stack</div>
+      <div class="nav-tab" data-target="sec-dataflow">Data Flow</div>
+    </div>
+    <span class="nav-badge">v1.0 — Production Blueprint</span>
+  </nav>
+
+  <!-- HERO -->
+  <div class="hero fade-up">
+    <div class="hero-label">
+      <div class="pulse"></div>
+      System Architecture — AI WhatsApp Travel Concierge
+    </div>
+    <h1>Complete Tech Stack<br><span>Blueprint</span></h1>
+    <p>Har layer ka role, har technology ka kaam — ek jagah poora picture dekho. WhatsApp se leke CRM handover tak, full
+      system design.</p>
+    <div class="version-chips">
+      <span class="vchip green">WhatsApp Business API</span>
+      <span class="vchip blue">Claude AI (Anthropic)</span>
+      <span class="vchip purple">PostgreSQL + Redis</span>
+      <span class="vchip orange">Node.js Backend</span>
+    </div>
+  </div>
+
+  <main>
+
+    <!-- ── LAYER-BY-LAYER ARCHITECTURE ── -->
+    <div class="sec-label" id="sec-overview" data-section>01 — Architecture Layers</div>
+
+    <div class="arch-flow fade-up delay-1">
+
+      <!-- Layer 1: User / WhatsApp -->
+      <div class="arch-column">
+        <div class="layer-card wa">
+          <div class="card-icon wa">📱</div>
+          <div class="card-label wa">Layer 1</div>
+          <div class="card-title">User + WhatsApp</div>
+          <div class="card-desc" style="margin-bottom:10px">Customer apna phone uthata hai aur WhatsApp pe message
+            bhejta hai. Yahan se journey shuru hoti hai.</div>
+          <span class="tech-tag wa">WhatsApp Business API</span>
+          <span class="tech-tag wa">Twilio / Meta Cloud API</span>
+          <span class="tech-tag wa">Webhook (HTTPS)</span>
+        </div>
+        <div class="layer-card wa" style="opacity:0.7">
+          <div class="card-label wa">Input Types</div>
+          <div class="card-desc">Text messages, voice notes (transcribed), images (hotel/passport), quick reply buttons
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrow 1 -->
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-dot" style="background:var(--wa)"></div>
+      </div>
+
+      <!-- Layer 2: Backend Server -->
+      <div class="arch-column">
+        <div class="layer-card node">
+          <div class="card-icon node">⚙️</div>
+          <div class="card-label node">Layer 2</div>
+          <div class="card-title">Backend Server</div>
+          <div class="card-desc" style="margin-bottom:10px">Webhook receive karta hai, message parse karta hai, session
+            manage karta hai, aur AI ko forward karta hai.</div>
+          <span class="tech-tag node">Node.js + Express</span>
+          <span class="tech-tag node">Twilio SDK</span>
+          <span class="tech-tag node">Bull Queue (jobs)</span>
+          <span class="tech-tag node">JWT Auth</span>
+        </div>
+        <div class="layer-card node" style="opacity:0.7">
+          <div class="card-label node">Responsibilities</div>
+          <div class="card-desc">Rate limiting, session tracking, message queuing, spam pre-filter, webhook signature
+            verification</div>
+        </div>
+      </div>
+
+      <!-- Arrow 2 -->
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-dot" style="background:var(--node); animation-delay:0.5s"></div>
+      </div>
+
+      <!-- Layer 3: AI Engine -->
+      <div class="arch-column">
+        <div class="layer-card ai">
+          <div class="card-icon ai">🧠</div>
+          <div class="card-label ai">Layer 3</div>
+          <div class="card-title">AI / NLU Engine</div>
+          <div class="card-desc" style="margin-bottom:10px">Conversation ka dimaag. Intent samajhta hai, itinerary
+            banata hai, spam detect karta hai.</div>
+          <span class="tech-tag ai">Claude API (Anthropic)</span>
+          <span class="tech-tag ai">Prompt Templates</span>
+          <span class="tech-tag ai">LangChain (optional)</span>
+          <span class="tech-tag ai">Streaming Responses</span>
+        </div>
+        <div class="layer-card ai" style="opacity:0.7">
+          <div class="card-label ai">AI Modules</div>
+          <div class="card-desc">Intent classifier · Itinerary generator · Spam filter · Feedback handler · Summarizer
+          </div>
+        </div>
+      </div>
+
+      <!-- Arrow 3 -->
+      <div class="h-arrow">
+        <div class="h-arrow-line"></div>
+        <div class="h-arrow-dot" style="background:var(--ai); animation-delay:1s"></div>
+      </div>
+
+      <!-- Layer 4: Database -->
+      <div class="arch-column">
+        <div class="layer-card db">
+          <div class="card-icon db">🗄️</div>
+          <div class="card-label db">Layer 4</div>
+          <div class="card-title">Data Layer</div>
+          <div class="card-desc" style="margin-bottom:10px">Conversations, sessions, itineraries, aur customer data —
+            sab yahan store hota hai.</div>
+          <span class="tech-tag db">PostgreSQL (main DB)</span>
+          <span class="tech-tag db">Redis (cache/session)</span>
+          <span class="tech-tag db">Prisma ORM</span>
+          <span class="tech-tag db">AWS S3 (files)</span>
+        </div>
+        <div class="layer-card db" style="opacity:0.7">
+          <div class="card-label db">Data Stored</div>
+          <div class="card-desc">Chat history · Customer profiles · Itinerary drafts · Session state · Spam blocklist
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end arch-flow -->
+
+    <!-- Row 2: CRM + Infra -->
+    <div style="display:grid; grid-template-columns:1fr 1fr; gap:14px; margin-bottom:2rem;" class="fade-up delay-2">
+
+      <div class="layer-card crm">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div class="card-icon crm" style="flex-shrink:0">👨‍💼</div>
+          <div>
+            <div class="card-label crm">Layer 5 — Human Handover</div>
+            <div class="card-title">CRM / Sales Dashboard</div>
+            <div class="card-desc" style="margin-bottom:10px">Jab itinerary confirm ho, AI ek clean summary CRM mein
+              push karta hai. Human agent wahan pricing karta hai.</div>
+            <span class="tech-tag crm">Custom Admin Dashboard</span>
+            <span class="tech-tag crm">WhatsApp re-entry API</span>
+            <span class="tech-tag crm">Email (Nodemailer)</span>
+            <span class="tech-tag crm">Notion / Airtable (optional)</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="layer-card infra">
+        <div style="display:flex;gap:12px;align-items:flex-start">
+          <div class="card-icon infra" style="flex-shrink:0">☁️</div>
+          <div>
+            <div class="card-label infra">Layer 6 — Infrastructure</div>
+            <div class="card-title">Hosting + DevOps</div>
+            <div class="card-desc" style="margin-bottom:10px">Saara system yahan chalega. Scalable, secure, aur
+              cost-effective setup.</div>
+            <span class="tech-tag infra">AWS EC2 / Railway.app</span>
+            <span class="tech-tag infra">Nginx (reverse proxy)</span>
+            <span class="tech-tag infra">PM2 (process manager)</span>
+            <span class="tech-tag infra">GitHub Actions (CI/CD)</span>
+            <span class="tech-tag infra">Sentry (error tracking)</span>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── LIVE DATA FLOW ── -->
+    <div class="sec-label" id="sec-dataflow" data-section>02 — Message Flow (User → AI → Human)</div>
+
+    <div class="flow-diagram fade-up delay-2">
+
+      <div style="margin-bottom: 20px;">
+        <div class="flow-label">Step 1: Customer sends message</div>
+        <div class="flow-row">
+          <div class="flow-node wa">📱 User (WhatsApp)</div>
+          <div class="flow-edge wa-color">
+            <div class="moving-dot"></div>
+          </div>
+          <div class="flow-node wa">📡 Meta / Twilio</div>
+          <div class="flow-edge wa-color">
+            <div class="moving-dot" style="animation-delay:0.3s"></div>
+          </div>
+          <div class="flow-node node">🔗 Webhook Endpoint</div>
+          <div class="flow-edge node-color">
+            <div class="moving-dot" style="animation-delay:0.6s"></div>
+          </div>
+          <div class="flow-node node">⚙️ Node.js Server</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <div class="flow-label">Step 2: Backend processes & sends to AI</div>
+        <div class="flow-row">
+          <div class="flow-node node">⚙️ Node.js</div>
+          <div class="flow-edge node-color">
+            <div class="moving-dot"></div>
+          </div>
+          <div class="flow-node db">🗄️ Redis (session fetch)</div>
+          <div class="flow-edge ai-color">
+            <div class="moving-dot" style="animation-delay:0.3s"></div>
+          </div>
+          <div class="flow-node ai">🧠 Claude API</div>
+          <div class="flow-edge ai-color">
+            <div class="moving-dot" style="animation-delay:0.6s"></div>
+          </div>
+          <div class="flow-node ai">📝 AI Response</div>
+        </div>
+      </div>
+
+      <div style="margin-bottom: 20px;">
+        <div class="flow-label">Step 3: AI response → WhatsApp → User</div>
+        <div class="flow-row">
+          <div class="flow-node ai">📝 AI Response</div>
+          <div class="flow-edge node-color">
+            <div class="moving-dot"></div>
+          </div>
+          <div class="flow-node db">🗄️ PostgreSQL (save)</div>
+          <div class="flow-edge wa-color">
+            <div class="moving-dot" style="animation-delay:0.3s"></div>
+          </div>
+          <div class="flow-node wa">📡 WhatsApp API</div>
+          <div class="flow-edge wa-color">
+            <div class="moving-dot" style="animation-delay:0.6s"></div>
+          </div>
+          <div class="flow-node wa">📱 User sees reply</div>
+        </div>
+      </div>
+
+      <div>
+        <div class="flow-label">Step 4: Confirm → CRM Handover</div>
+        <div class="flow-row">
+          <div class="flow-node ai">✅ Confirm detected</div>
+          <div class="flow-edge ai-color">
+            <div class="moving-dot"></div>
+          </div>
+          <div class="flow-node ai">📋 AI Summarizer</div>
+          <div class="flow-edge crm-color">
+            <div class="moving-dot" style="animation-delay:0.3s"></div>
+          </div>
+          <div class="flow-node crm">🏢 CRM Dashboard</div>
+          <div class="flow-edge crm-color">
+            <div class="moving-dot" style="animation-delay:0.6s"></div>
+          </div>
+          <div class="flow-node crm">👨‍💼 Human Agent</div>
+        </div>
+      </div>
+
+    </div>
+
+    <!-- ── TECH STACK DEEP DIVE ── -->
+    <div class="sec-label" id="sec-techstack" data-section>03 — Technology Deep Dive</div>
+
+    <div class="tech-grid fade-up delay-3">
+
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-icon-big" style="background:rgba(37,211,102,0.1)">📱</div>
+          <div>
+            <div class="tech-card-title" style="color:var(--wa)">WhatsApp Layer</div>
+            <div class="tech-card-sub">Customer touchpoint</div>
+          </div>
+        </div>
+        <ul class="tech-list">
+          <li><span class="tech-name">Meta Cloud API</span><span class="tech-role">Official WhatsApp Business API — free
+              tier available</span></li>
+          <li><span class="tech-name">Twilio (alt)</span><span class="tech-role">Simpler setup, paid per message — good
+              for MVP</span></li>
+          <li><span class="tech-name">Webhook HTTPS</span><span class="tech-role">Message aata hai toh Node.js ko POST
+              request milta hai</span></li>
+          <li><span class="tech-name">Template Msgs</span><span class="tech-role">Pehla message sirf approved template
+              se jaayega (Meta rule)</span></li>
+        </ul>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-icon-big" style="background:rgba(240,165,0,0.1)">⚙️</div>
+          <div>
+            <div class="tech-card-title" style="color:var(--node)">Backend Server</div>
+            <div class="tech-card-sub">System ka nerve center</div>
+          </div>
+        </div>
+        <ul class="tech-list">
+          <li><span class="tech-name">Node.js</span><span class="tech-role">Async I/O — WhatsApp jaise real-time apps ke
+              liye perfect</span></li>
+          <li><span class="tech-name">Express.js</span><span class="tech-role">REST API routes, webhook handler,
+              middleware chain</span></li>
+          <li><span class="tech-name">Bull + Redis</span><span class="tech-role">Message queue — agar AI slow hو toh
+              queue mein daalo</span></li>
+          <li><span class="tech-name">Zod</span><span class="tech-role">Input validation — malformed webhook data reject
+              karo</span></li>
+        </ul>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-icon-big" style="background:rgba(74,158,255,0.1)">🧠</div>
+          <div>
+            <div class="tech-card-title" style="color:var(--ai)">AI / NLU Engine</div>
+            <div class="tech-card-sub">Conversation intelligence</div>
+          </div>
+        </div>
+        <ul class="tech-list">
+          <li><span class="tech-name">Claude API</span><span class="tech-role">Main LLM — intent, itinerary,
+              summarization sab kuch</span></li>
+          <li><span class="tech-name">System Prompts</span><span class="tech-role">Agent ka "brain" — rules, tone,
+              guardrails pre-fed hote hain</span></li>
+          <li><span class="tech-name">Context Window</span><span class="tech-role">Puri conversation history AI ko dete
+              hain — memory milti hai</span></li>
+          <li><span class="tech-name">Prompt Templates</span><span class="tech-role">Discovery / Itinerary / Filter /
+              Handover — alag prompts</span></li>
+        </ul>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-icon-big" style="background:rgba(168,85,247,0.1)">🗄️</div>
+          <div>
+            <div class="tech-card-title" style="color:var(--db)">Data Layer</div>
+            <div class="tech-card-sub">Persistence + caching</div>
+          </div>
+        </div>
+        <ul class="tech-list">
+          <li><span class="tech-name">PostgreSQL</span><span class="tech-role">Customers, conversations, itineraries —
+              permanent store</span></li>
+          <li><span class="tech-name">Redis</span><span class="tech-role">Active session state — fast access, TTL set
+              karo</span></li>
+          <li><span class="tech-name">Prisma ORM</span><span class="tech-role">Type-safe DB queries — less bugs, easy
+              migrations</span></li>
+          <li><span class="tech-name">AWS S3</span><span class="tech-role">User photos, PDFs — file storage outside
+              DB</span></li>
+        </ul>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-icon-big" style="background:rgba(255,107,53,0.1)">👨‍💼</div>
+          <div>
+            <div class="tech-card-title" style="color:var(--crm)">CRM / Dashboard</div>
+            <div class="tech-card-sub">Human agent interface</div>
+          </div>
+        </div>
+        <ul class="tech-list">
+          <li><span class="tech-name">Next.js (Admin)</span><span class="tech-role">Sales team ka dashboard — incoming
+              leads, itinerary view</span></li>
+          <li><span class="tech-name">WhatsApp re-entry</span><span class="tech-role">Agent pricing type karta hai →
+              customer ko auto-send</span></li>
+          <li><span class="tech-name">Nodemailer</span><span class="tech-role">Email notification jab hot lead aata
+              hai</span></li>
+          <li><span class="tech-name">Airtable (opt)</span><span class="tech-role">Simple no-code CRM agar custom
+              dashboard na banana ho</span></li>
+        </ul>
+      </div>
+
+      <div class="tech-card">
+        <div class="tech-card-header">
+          <div class="tech-icon-big" style="background:rgba(16,185,129,0.1)">☁️</div>
+          <div>
+            <div class="tech-card-title" style="color:var(--infra)">Infrastructure</div>
+            <div class="tech-card-sub">Hosting + monitoring</div>
+          </div>
+        </div>
+        <ul class="tech-list">
+          <li><span class="tech-name">Railway.app</span><span class="tech-role">MVP ke liye — Node.js + Postgres + Redis
+              sab ek jagah</span></li>
+          <li><span class="tech-name">AWS EC2</span><span class="tech-role">Production scale ke liye — t3.medium kafi
+              hai shuru mein</span></li>
+          <li><span class="tech-name">Nginx</span><span class="tech-role">Reverse proxy + SSL termination + rate
+              limiting</span></li>
+          <li><span class="tech-name">Sentry</span><span class="tech-role">Error tracking — kab kahan crash hua pata
+              chalega</span></li>
+        </ul>
+      </div>
+
+    </div>
+
+    <!-- ── PHASE → TECH MAPPING ── -->
+    <div class="sec-label" id="sec-phases" data-section>04 — Phase-wise Tech Usage</div>
+
+    <div class="flow-detail fade-up delay-3">
+      <div class="flow-detail-header">
+        <h3>Kaunsa Phase — Kaunsa Tech</h3>
+        <span style="font-size:0.65rem;color:var(--muted)">End-to-end mapping</span>
+      </div>
+      <div class="flow-steps-row">
+        <div class="flow-step-item">
+          <div class="step-num-big" style="color:var(--wa)">1</div>
+          <div class="step-icon">🛬</div>
+          <div class="step-title-small" style="color:var(--wa)">Message Arrives</div>
+          <div class="step-tech-small">WhatsApp API → Twilio Webhook → Node.js Express route</div>
+        </div>
+        <div class="flow-step-item">
+          <div class="step-num-big" style="color:var(--node)">2</div>
+          <div class="step-icon">🔍</div>
+          <div class="step-title-small" style="color:var(--node)">Pre-Processing</div>
+          <div class="step-tech-small">Redis session load → spam pre-check → message sanitize → Bull queue</div>
+        </div>
+        <div class="flow-step-item">
+          <div class="step-num-big" style="color:var(--ai)">3</div>
+          <div class="step-icon">🧠</div>
+          <div class="step-title-small" style="color:var(--ai)">AI Processing</div>
+          <div class="step-tech-small">Claude API → System prompt → History context → Intent + Reply generation</div>
+        </div>
+        <div class="flow-step-item">
+          <div class="step-num-big" style="color:var(--db)">4</div>
+          <div class="step-icon">💾</div>
+          <div class="step-title-small" style="color:var(--db)">Save + Send</div>
+          <div class="step-tech-small">PostgreSQL save → Redis update → WhatsApp API reply → user dekhe</div>
+        </div>
+        <div class="flow-step-item">
+          <div class="step-num-big" style="color:var(--crm)">5</div>
+          <div class="step-icon">🤝</div>
+          <div class="step-title-small" style="color:var(--crm)">Handover</div>
+          <div class="step-tech-small">AI summarizer → CRM dashboard push → Email alert → Human agent</div>
+        </div>
+      </div>
+      <div style="padding: 16px 20px;">
+        <div class="env-code">
+          <span class="cmt">// Typical API call — Node.js → Claude</span><br>
+          <span class="kw">const</span> response = <span class="kw">await</span> anthropic.messages.create({<br>
+          &nbsp;&nbsp;model: <span class="str">"claude-sonnet-4-20250514"</span>,<br>
+          &nbsp;&nbsp;system: systemPrompt, <span class="cmt">// agent rules loaded here</span><br>
+          &nbsp;&nbsp;messages: conversationHistory, <span class="cmt">// from PostgreSQL</span><br>
+          &nbsp;&nbsp;max_tokens: <span class="str">1024</span><br>
+          });
+        </div>
+      </div>
+    </div>
+
+    <!-- ── ENV SETUP ── -->
+    <div class="sec-label" id="sec-env" data-section>05 — Environment & Config</div>
+
+    <div class="env-grid fade-up delay-4">
+      <div class="env-card">
+        <div class="env-title"><span style="color:var(--node)">●</span> Backend .env Variables</div>
+        <div class="env-code">
+          <span class="cmt"># WhatsApp</span><br>
+          <span class="kw">TWILIO_ACCOUNT_SID</span>=ACxxxxx<br>
+          <span class="kw">TWILIO_AUTH_TOKEN</span>=xxxxxx<br>
+          <span class="kw">WHATSAPP_NUMBER</span>=+14155238886<br><br>
+          <span class="cmt"># AI</span><br>
+          <span class="kw">ANTHROPIC_API_KEY</span>=sk-ant-xxx<br><br>
+          <span class="cmt"># Database</span><br>
+          <span class="kw">DATABASE_URL</span>=postgresql://...<br>
+          <span class="kw">REDIS_URL</span>=redis://localhost:6379<br><br>
+          <span class="cmt"># App</span><br>
+          <span class="kw">PORT</span>=3000<br>
+          <span class="kw">NODE_ENV</span>=production
+        </div>
+      </div>
+      <div class="env-card">
+        <div class="env-title"><span style="color:var(--infra)">●</span> Infrastructure Setup Steps</div>
+        <div class="env-row"><span class="env-key">1. Domain + SSL</span><span class="env-val">Cloudflare DNS + Let's
+            Encrypt cert</span></div>
+        <div class="env-row"><span class="env-key">2. Server</span><span class="env-val">Railway (MVP) ya AWS EC2
+            t3.medium</span></div>
+        <div class="env-row"><span class="env-key">3. Database</span><span class="env-val">Railway Postgres ya AWS RDS
+            free tier</span></div>
+        <div class="env-row"><span class="env-key">4. Redis</span><span class="env-val">Railway Redis ya Upstash
+            (serverless)</span></div>
+        <div class="env-row"><span class="env-key">5. WhatsApp</span><span class="env-val">Meta Business account verify
+            + phone add</span></div>
+        <div class="env-row"><span class="env-key">6. CI/CD</span><span class="env-val">GitHub Actions → auto deploy on
+            main push</span></div>
+        <div class="env-row"><span class="env-key">7. Monitoring</span><span class="env-val">Sentry + UptimeRobot (free)
+            ping every 5 min</span></div>
+      </div>
+    </div>
+
+    <!-- ── COST TABLE ── -->
+    <div class="sec-label" id="sec-cost" data-section>06 — Monthly Cost Estimate (MVP Scale)</div>
+
+    <div class="cost-table fade-up delay-4">
+      <table>
+        <thead>
+          <tr>
+            <th>Service</th>
+            <th>Provider</th>
+            <th>What it does</th>
+            <th>Est. Cost/Month</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>WhatsApp Business API</td>
+            <td style="color:var(--wa)">Meta / Twilio</td>
+            <td>1000 conversations free, then ₹0.50–₹2 per conv</td>
+            <td>₹0–₹2,000</td>
+          </tr>
+          <tr>
+            <td>Claude AI (Anthropic)</td>
+            <td style="color:var(--ai)">Anthropic</td>
+            <td>~500 conversations × avg 3K tokens</td>
+            <td>~₹1,500</td>
+          </tr>
+          <tr>
+            <td>Server (Node.js)</td>
+            <td style="color:var(--node)">Railway / EC2</td>
+            <td>t3.micro ya Railway starter plan</td>
+            <td>₹700–₹1,500</td>
+          </tr>
+          <tr>
+            <td>PostgreSQL DB</td>
+            <td style="color:var(--db)">Railway / Supabase</td>
+            <td>Conversations + customer data store</td>
+            <td>₹0–₹600</td>
+          </tr>
+          <tr>
+            <td>Redis Cache</td>
+            <td style="color:var(--db)">Upstash (free tier)</td>
+            <td>Session state, message queue</td>
+            <td>₹0</td>
+          </tr>
+          <tr>
+            <td>Monitoring + Email</td>
+            <td style="color:var(--infra)">Sentry / UptimeRobot</td>
+            <td>Error tracking + uptime alerts</td>
+            <td>₹0–₹400</td>
+          </tr>
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="3"><strong>Total MVP Monthly Cost</strong></td>
+            <td>≈ ₹3,000–₹5,000 / month</td>
+          </tr>
+        </tfoot>
+      </table>
+    </div>
+
+  </main>
+
+  <footer>
+    TravelMind AI — Architecture v1.0 &nbsp;|&nbsp;
+    Stack: Node.js · Claude API · PostgreSQL · Redis · WhatsApp Business API &nbsp;|&nbsp;
+    Built for scale from day one
+  </footer>
+
+  <script>
+    // ── NAV TAB SMOOTH SCROLL + SCROLL-SPY ──
+
+    const tabs = document.querySelectorAll('.nav-tab');
+    const sections = document.querySelectorAll('[data-section]');
+
+    // Click handler — smooth scroll to target section
+    tabs.forEach(tab => {
+      tab.addEventListener('click', () => {
+        const targetId = tab.getAttribute('data-target');
+        if (!targetId) return;
+
+        const target = document.getElementById(targetId);
+        if (target) {
+          // offset for sticky nav height
+          const navH = document.querySelector('nav').offsetHeight;
+          const top = target.getBoundingClientRect().top + window.scrollY - navH - 16;
+          window.scrollTo({ top, behavior: 'smooth' });
+        }
+
+        // immediately update active
+        tabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+      });
+    });
+
+    // Scroll-spy — highlight tab based on scroll position
+    function updateActiveTab() {
+      const navH = document.querySelector('nav').offsetHeight + 40;
+      let currentId = '';
+
+      sections.forEach(sec => {
+        const top = sec.getBoundingClientRect().top;
+        if (top <= navH) {
+          currentId = sec.id;
+        }
+      });
+
+      if (currentId) {
+        tabs.forEach(t => {
+          if (t.getAttribute('data-target') === currentId) {
+            t.classList.add('active');
+          } else {
+            t.classList.remove('active');
+          }
+        });
+      }
+    }
+
+    window.addEventListener('scroll', updateActiveTab, { passive: true });
+    // initial call
+    updateActiveTab();
+  </script>
+
+</body>
+
+</html>
